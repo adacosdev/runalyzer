@@ -178,3 +178,71 @@ export { generateFeedback } from './feedbackGenerator';
 
 // Re-export activity types needed for analysis
 export type { ActivityStream } from '../activity/types';
+
+// Re-export use-case functions for convenience
+export { fetchActivityStreams } from '../../api/intervals-client';
+export type { StreamType } from '../activity/types';
+
+/**
+ * Get activity streams for charts
+ * 
+ * This is a convenience wrapper around the API function.
+ * 
+ * @param activityId - The activity ID
+ * @param types - Array of stream types to fetch (default: time, heartrate, velocity_smooth)
+ * @returns Stream data object
+ */
+export async function getActivityStreams(
+  activityId: string,
+  types: string[] = ['time', 'heartrate', 'velocity_smooth']
+): Promise<{
+  time: number[];
+  heartrate?: number[];
+  velocity_smooth?: number[];
+  distance?: number[];
+  altitude?: number[];
+}> {
+  const { useClientStore } = await import('../../store/client');
+  const { fetchActivityStreams: fetchStreams } = await import('../../api/intervals-client');
+  
+  const clientStore = useClientStore.getState();
+  
+  // Initialize client if needed
+  if (!clientStore.isInitialized) {
+    await clientStore.initialize();
+  }
+  
+  const client = clientStore.getClient();
+  
+  // Fetch streams from API
+  const streams = await fetchStreams(client, activityId, types as any);
+  
+  // Transform from array format to object format for easier use
+  const result: {
+    time: number[];
+    heartrate?: number[];
+    velocity_smooth?: number[];
+    distance?: number[];
+    altitude?: number[];
+  } = {
+    time: [],
+  };
+  
+  if (streams && Array.isArray(streams)) {
+    for (const stream of streams) {
+      if (stream.type === 'time') {
+        result.time = stream.data;
+      } else if (stream.type === 'heartrate') {
+        result.heartrate = stream.data;
+      } else if (stream.type === 'velocity_smooth') {
+        result.velocity_smooth = stream.data;
+      } else if (stream.type === 'distance') {
+        result.distance = stream.data;
+      } else if (stream.type === 'altitude') {
+        result.altitude = stream.data;
+      }
+    }
+  }
+  
+  return result;
+}
