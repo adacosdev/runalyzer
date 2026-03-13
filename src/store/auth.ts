@@ -24,7 +24,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       apiKey: null,
       isAuthenticated: false,
       isValidating: false,
@@ -49,7 +49,14 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'runalyzer-auth',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ apiKey: state.apiKey }), // Only persist apiKey
+      partialize: (state) => ({ apiKey: state.apiKey }),
+      onRehydrateStorage: () => (state) => {
+        // FIX: If apiKey exists after rehydration, set isAuthenticated to true
+        // Zustand persist only restores persisted state, not derived state
+        if (state && state.apiKey && !state.isAuthenticated) {
+          state.isAuthenticated = true;
+        }
+      },
     }
   )
 );
