@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore, useActivitiesStore, useZonesStore } from '../../store';
 import { syncActivities } from '../../application';
 import { ActivityCard } from '../components';
@@ -83,6 +84,8 @@ export function DashboardPage() {
 }
 
 function OnboardingPrompt() {
+  const navigate = useNavigate();
+  
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
@@ -94,18 +97,20 @@ function OnboardingPrompt() {
           Analiza tus entrenamientos con el metodo de Luis del Águila.
           Conecta tu cuenta de Intervals.icu para empezar.
         </p>
-        <a
-          href="#/setup"
+        <button
+          onClick={() => navigate('/setup')}
           className="block w-full py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
         >
           Conectar Intervals.icu
-        </a>
+        </button>
       </div>
     </div>
   );
 }
 
 function SetupPrompt() {
+  const navigate = useNavigate();
+  
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
@@ -114,14 +119,14 @@ function SetupPrompt() {
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Configura tus zonas</h1>
         <p className="text-gray-600 mb-6">
-          Para analizar tus entrenamientos, necesitamos configurar tus zonas de frecuencia cardíaca.
+          Para analizar tus entrenamientos, necesitamos configurar tus zonas de frecuencia cardiaca.
         </p>
-        <a
-          href="#/calibrate"
+        <button
+          onClick={() => navigate('/calibrate')}
           className="block w-full py-3 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600"
         >
           Calibrar zonas
-        </a>
+        </button>
       </div>
     </div>
   );

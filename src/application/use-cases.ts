@@ -71,7 +71,7 @@ export async function syncActivities(options?: {
   activitiesStore.setError(null);
   
   try {
-    const client = createIntervalsClient({ apiKey });
+    const client = await createIntervalsClient({ apiKey });
     const activities = await fetchActivities(client, options);
     
     activitiesStore.setActivities(activities);
