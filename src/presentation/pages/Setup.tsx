@@ -57,10 +57,10 @@ export function SetupPage() {
         {step === 'connect' && (
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Conectá Intervals.icu
+              Conecta Intervals.icu
             </h1>
             <p className="text-gray-600 mb-6">
-              Necesitás tu API key de Intervals.icu. La encontrás en Settings → API.
+              Necesitas tu API key de Intervals.icu. La encuentras en Settings - API.
             </p>
             
             <input
@@ -93,7 +93,7 @@ export function SetupPage() {
         {step === 'age' && (
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              ¿Cuántos años tenés?
+              Cuantos aos tienes?
             </h1>
             <p className="text-gray-600 mb-6">
               Lo usamos para estimar tus zonas de frecuencia cardíaca.

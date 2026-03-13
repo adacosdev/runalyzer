@@ -91,8 +91,8 @@ function OnboardingPrompt() {
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Runalyzer</h1>
         <p className="text-gray-600 mb-6">
-          Analizá tus entrenamientos con el método de Luis del Águila.
-          Conectá tu cuenta de Intervals.icu para empezar.
+          Analiza tus entrenamientos con el metodo de Luis del Águila.
+          Conecta tu cuenta de Intervals.icu para empezar.
         </p>
         <a
           href="#/setup"
@@ -112,7 +112,7 @@ function SetupPrompt() {
         <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-3xl">⚙️</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Configurá tus zonas</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Configura tus zonas</h1>
         <p className="text-gray-600 mb-6">
           Para analizar tus entrenamientos, necesitamos configurar tus zonas de frecuencia cardíaca.
         </p>
@@ -136,9 +136,9 @@ function EmptyState({ onSync, isLoading }: { onSync: () => void; isLoading: bool
       <h2 className="text-lg font-semibold text-gray-900 mb-2">
         No hay actividades
       </h2>
-      <p className="text-gray-500 mb-6">
-        Sincronizá con Intervals.icu para ver tus entrenamientos
-      </p>
+        <p className="text-gray-500 mb-6">
+          Sincroniza con Intervals.icu para ver tus entrenamientos
+        </p>
       <button
         onClick={onSync}
         disabled={isLoading}
