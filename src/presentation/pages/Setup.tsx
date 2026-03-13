@@ -88,11 +88,11 @@ export function SetupPage() {
 
         {/* Step 1: Connect */}
         {step === 'connect' && (
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="bg-[#111111] rounded-2xl border border-[#2A2A2A] p-8">
+            <h1 className="text-2xl font-bold text-white mb-2">
               Conecta Intervals.icu
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-400 mb-6">
               Necesitas tu API key de Intervals.icu. La encuentras en Settings - API.
             </p>
             
@@ -124,11 +124,11 @@ export function SetupPage() {
 
         {/* Step 2: Age */}
         {step === 'age' && (
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="bg-[#111111] rounded-2xl border border-[#2A2A2A] p-8">
+            <h1 className="text-2xl font-bold text-white mb-2">
               Cuantos anos tienes?
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-400 mb-6">
               Lo usamos para estimar tus zonas de frecuencia cardiaca.
             </p>
             
@@ -152,11 +152,11 @@ export function SetupPage() {
 
         {/* Step 3: Calibrate */}
         {step === 'calibrate' && !manualMode && (
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="bg-[#111111] rounded-2xl border border-[#2A2A2A] p-8">
+            <h1 className="text-2xl font-bold text-white mb-2">
               Tus zonas
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-400 mb-6">
               Estas son tus zonas segun tu edad. Puedes usarlas o introducir las tuyas propias.
             </p>
             
@@ -207,11 +207,11 @@ export function SetupPage() {
 
         {/* Manual Zone Input */}
         {manualMode && (
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="bg-[#111111] rounded-2xl border border-[#2A2A2A] p-8">
+            <h1 className="text-2xl font-bold text-white mb-2">
               Tus zonas
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-400 mb-6">
               Introduce tus zonas de frecuencia cardiaca. Si no las conoces, haz un test de esfuerzo o consulta con un profesional.
             </p>
             

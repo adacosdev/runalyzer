@@ -4,6 +4,7 @@
  * Displays a summary of a running activity in the list.
  */
 
+import { Link } from 'react-router-dom';
 import { DomainActivity } from '../../domain/activity/types';
 import { formatDuration, formatPace } from '../../domain/analysis/math';
 
@@ -13,6 +14,12 @@ interface ActivityCardProps {
 }
 
 export function ActivityCard({ activity, onClick }: ActivityCardProps) {
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('es-AR', {
       weekday: 'short',
@@ -37,13 +44,20 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
   const distanceKm = (activity.distance / 1000).toFixed(1);
 
   return (
-    <button
-      onClick={onClick}
-      className="w-full text-left bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all"
+    <Link
+      to={`/activity/${activity.id}`}
+      onClick={handleClick}
+      className="block w-full text-left bg-[#111111] rounded-xl border border-[#2A2A2A] p-4 
+        hover:border-orange-500 hover:shadow-[0_0_30px_rgba(255,107,0,0.3)] 
+        hover:bg-[#1A1A1A] transition-all duration-300"
     >
+      {/* Glow effect inside */}
+      <div className="relative">
+        {/* Inner glow gradient */}
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-500/5 via-transparent to-orange-500/5 opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h3 className="font-semibold text-gray-900 line-clamp-1">
+          <h3 className="font-semibold text-orange-500 line-clamp-1">
             {activity.name}
           </h3>
           <p className="text-sm text-gray-500">
@@ -51,12 +65,12 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-lg font-bold text-gray-900">{distanceKm} km</p>
+          <p className="text-lg font-bold text-orange-500">{distanceKm} km</p>
           <p className="text-sm text-gray-500">{pace}/km</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-gray-600">
+      <div className="flex items-center gap-4 text-sm text-gray-400">
         <span className="flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -66,7 +80,7 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
         
         {activity.hasHeartrate && activity.averageHeartrate && (
           <span className="flex items-center gap-1">
-            <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
             {Math.round(activity.averageHeartrate)} bpm
@@ -88,10 +102,10 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
         <span className={`
           text-xs px-2 py-1 rounded-full
           ${activity.dataAvailability === 'full-streams' 
-            ? 'bg-green-100 text-green-700' 
+            ? 'bg-green-900/30 text-green-400' 
             : activity.dataAvailability === 'summary-only'
-            ? 'bg-yellow-100 text-yellow-700'
-            : 'bg-gray-100 text-gray-700'
+            ? 'bg-orange-900/30 text-orange-400'
+            : 'bg-gray-800 text-gray-400'
           }
         `}>
           {activity.dataAvailability === 'full-streams' 
@@ -102,6 +116,7 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
           }
         </span>
       </div>
-    </button>
+      </div>
+    </Link>
   );
 }
