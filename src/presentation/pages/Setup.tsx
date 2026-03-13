@@ -10,14 +10,16 @@ import { useAuthStore, useZonesStore } from '../../store';
 import { authenticate } from '../../application';
 import { getDefaultZoneConfig } from '../../domain/zones/types';
 
+type SetupStep = 'connect' | 'age' | 'calibrate';
+
 export function SetupPage() {
   const navigate = useNavigate();
   const { isAuthenticated, error, isValidating } = useAuthStore();
   const { setAge, initializeDefaultConfig, zoneConfig } = useZonesStore();
   
   const [apiKey, setApiKey] = useState('');
-  const [step, setStep] = useState<'connect' | 'age' | 'calibrate'>(
-    isAuthenticated ? (zoneConfig ? 'calibrate' : 'age')
+  const [step, setStep] = useState<SetupStep>(
+    isAuthenticated ? (zoneConfig ? 'calibrate' : 'age') : 'connect'
   );
   
   const [age, setAgeInput] = useState(30);

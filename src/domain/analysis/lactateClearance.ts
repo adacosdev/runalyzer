@@ -47,12 +47,12 @@ export function analyzeLactateClearance(
       const peakHR = interval.maxHeartrate;
       const endHR = nextInterval.averageHeartrate;
       
-      if (peakHR > 0 && endHR > 0) {
+      if (peakHR && endHR && peakHR > 0 && endHR > 0) {
         const dropBpm = peakHR - endHR;
         const dropPercent = percentChange(peakHR, endHR);
         
         recoveryIntervals.push({
-          name: nextInterval.name || `Recuperación ${recoveryIntervals.length + 1}`,
+          name: nextInterval.name || `Recuperacion ${recoveryIntervals.length + 1}`,
           peakHR: roundTo(peakHR),
           endHR: roundTo(endHR),
           dropBpm: roundTo(dropBpm),

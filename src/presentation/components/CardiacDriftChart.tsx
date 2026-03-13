@@ -79,14 +79,13 @@ export function CardiacDriftChart({ result, heartRateData }: CardiacDriftChartPr
                 fontSize={12}
               />
               <Tooltip 
-                labelFormatter={(value) => `${Math.floor(value / 60)} min`}
-                formatter={(value: number) => [`${Math.round(value)} bpm`, 'FC']}
+                formatter={(value: any) => [`${Math.round(value)} bpm`, 'FC']}
               />
               <ReferenceLine 
                 y={result.firstHalfAvgHR} 
                 stroke="#10B981" 
                 strokeDasharray="5 5" 
-                label={{ value: '1ra mitad', fill: '#10B981', fontSize: 10 }}
+                label={undefined}
               />
               <Line 
                 type="monotone" 

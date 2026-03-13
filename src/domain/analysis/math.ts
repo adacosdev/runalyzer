@@ -121,7 +121,7 @@ export function zoneSecondsToPercent(
 export function filterInvalidHR(
   hrData: number[]
 ): { filtered: number[]; validCount: number; totalCount: number; validPercent: number } {
-  const filtered = hrData.filter(hr => hr > 30 && hr <= 220); // Reasonable HR range
+  const filtered = hrData.filter(hr => hr >= 30 && hr <= 220); // Reasonable HR range
   const validCount = filtered.length;
   const totalCount = hrData.length;
   const validPercent = totalCount > 0 ? (validCount / totalCount) * 100 : 0;
@@ -131,9 +131,10 @@ export function filterInvalidHR(
 
 /**
  * Split array into two halves
+ * First half gets the extra element if odd length
  */
 export function splitInHalf<T>(array: T[]): [T[], T[]] {
-  const midpoint = Math.floor(array.length / 2);
+  const midpoint = Math.ceil(array.length / 2);
   return [array.slice(0, midpoint), array.slice(midpoint)];
 }
 

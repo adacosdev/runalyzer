@@ -8,8 +8,7 @@
 import { 
   ActivityAnalysis, 
   DataAvailability, 
-  DataQualityReport,
-  ActivityStream 
+  DataQualityReport
 } from './types';
 import { ZoneConfig } from '../zones/types';
 import { DomainActivity, DomainInterval } from '../activity/types';
@@ -176,3 +175,6 @@ export { analyzeZoneDistribution } from './zoneDistribution';
 export { analyzeLactateClearance } from './lactateClearance';
 export { analyzeInternalExternalLoad } from './internalExternalLoad';
 export { generateFeedback } from './feedbackGenerator';
+
+// Re-export activity types needed for analysis
+export type { ActivityStream } from '../activity/types';

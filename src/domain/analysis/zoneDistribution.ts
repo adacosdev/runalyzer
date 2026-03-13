@@ -42,7 +42,6 @@ export function analyzeZoneDistribution(
   const { z1Percent, z2Percent, z3Percent } = zoneSecondsToPercent(z1, z2, z3);
   
   // Generate verdict based on ideal distribution for runners
-  // Luis del Águila advocates: ~80% Z1, ~15% Z2, ~5% Z3 for base training
   const verdict = generateZoneVerdict(z1Percent, z2Percent, z3Percent, zoneConfig.isEstimated);
   
   return {
@@ -64,7 +63,7 @@ export function analyzeZoneDistribution(
 function generateZoneVerdict(
   z1Percent: number,
   z2Percent: number,
-  z3Percent: boolean,
+  z3Percent: number,
   isEstimated: boolean
 ): string {
   let message = '';

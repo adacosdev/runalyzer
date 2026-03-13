@@ -89,7 +89,7 @@ export function RPEInput({ activityId, onSave }: RPEInputProps) {
                 backgroundColor: selectedValue === value ? RPE_COLORS[value] : '#f3f4f6',
                 color: selectedValue === value ? 'white' : '#374151',
                 ringColor: RPE_COLORS[value]
-              }}
+              } as any}
             >
               <span className="text-lg font-bold">{value}</span>
             </button>

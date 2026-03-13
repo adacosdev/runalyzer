@@ -2,18 +2,14 @@
  * Intervals.icu API Client - Runalyzer
  * 
  * Wrapper around the intervals-icu npm package.
- * Handles authentication, data fetching, and DTO → domain mapping.
+ * Handles authentication, data fetching, and DTO -> domain mapping.
  */
 
-import { IntervalsICU } from 'intervals-icu';
-import { 
-  DomainActivity, 
-  DomainInterval, 
-  RawActivity, 
-  RawInterval,
-  ActivityStream,
-  StreamType
-} from '../domain/activity/types';
+import { DomainActivity, DomainInterval, ActivityStream, StreamType, RawActivity, RawInterval } from '../domain/activity/types';
+
+// Use require to avoid ESM issues with intervals-icu
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const IntervalsICULib = require('intervals-icu');
 
 /**
  * Client configuration
@@ -26,8 +22,8 @@ export interface IntervalsClientConfig {
 /**
  * Create an authenticated Intervals.icu client
  */
-export function createIntervalsClient(config: IntervalsClientConfig): IntervalsICU {
-  return new IntervalsICU({
+export function createIntervalsClient(config: IntervalsClientConfig): any {
+  return new IntervalsICULib({
     apiKey: config.apiKey,
     athleteId: config.athleteId || '0',
   });
@@ -37,7 +33,7 @@ export function createIntervalsClient(config: IntervalsClientConfig): IntervalsI
  * Fetch activities within a date range
  */
 export async function fetchActivities(
-  client: IntervalsICU,
+  client: any,
   options: {
     oldest?: string; // YYYY-MM-DD
     newest?: string; // YYYY-MM-DD
@@ -52,14 +48,14 @@ export async function fetchActivities(
     limit,
   });
   
-  return response.map(mapRawActivityToDomain);
+  return response.map((raw: any) => mapRawActivityToDomain(raw));
 }
 
 /**
  * Fetch a single activity with intervals
  */
 export async function fetchActivityWithIntervals(
-  client: IntervalsICU,
+  client: any,
   activityId: string
 ): Promise<DomainActivity> {
   const activity = await client.activities.getActivity(activityId, {
@@ -73,13 +69,13 @@ export async function fetchActivityWithIntervals(
  * Fetch stream data for an activity
  */
 export async function fetchActivityStreams(
-  client: IntervalsICU,
+  client: any,
   activityId: string,
   types: StreamType[] = ['heartrate', 'velocity_smooth', 'time']
 ): Promise<ActivityStream[]> {
   const streams = await client.activities.getStreams(activityId, types);
   
-  return streams.map(stream => ({
+  return streams.map((stream: any) => ({
     type: stream.type as StreamType,
     data: stream.data,
   }));
@@ -102,7 +98,7 @@ export async function validateApiKey(apiKey: string): Promise<boolean> {
 /**
  * Map raw activity from Intervals.icu to domain model
  */
-function mapRawActivityToDomain(raw: RawActivity): DomainActivity {
+function mapRawActivityToDomain(raw: any): DomainActivity {
   return {
     id: raw.id,
     name: raw.name,
@@ -116,7 +112,7 @@ function mapRawActivityToDomain(raw: RawActivity): DomainActivity {
     averageHeartrate: raw.average_heartrate,
     maxHeartrate: raw.max_heartrate,
     hasHeartrate: raw.has_heartrate,
-    averagePace: raw.average_speed ? 1000 / raw.average_speed : null, // m/s → sec/km
+    averagePace: raw.average_speed ? 1000 / raw.average_speed : null, // m/s -> sec/km
     maxPace: raw.max_speed ? 1000 / raw.max_speed : null,
     icuIntervals: raw.icu_intervals?.map(mapRawIntervalToDomain) || [],
     icuHrZoneTimes: raw.icu_hr_zone_times || [],
@@ -128,7 +124,7 @@ function mapRawActivityToDomain(raw: RawActivity): DomainActivity {
 /**
  * Map raw interval to domain model
  */
-function mapRawIntervalToDomain(raw: RawInterval): DomainInterval {
+function mapRawIntervalToDomain(raw: any): DomainInterval {
   return {
     id: raw.id,
     name: raw.name,
@@ -165,6 +161,6 @@ function mapIntervalType(type: string): DomainInterval['type'] {
 /**
  * Get athlete info (for zone calibration)
  */
-export async function getAthleteInfo(client: IntervalsICU) {
+export async function getAthleteInfo(client: any) {
   return client.athlete.getAthlete();
 }
