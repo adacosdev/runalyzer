@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -15,9 +16,15 @@ export default {
         'drift-ok': '#10B981',
         'drift-warning': '#F59E0B', 
         'drift-bad': '#EF4444',
+        // Custom dark
+        'bg-primary': '#050505',
+        'bg-secondary': '#0A0A0A',
+        'bg-card': '#111111',
+        'neon-orange': '#FF6B00',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Chakra Petch', 'sans-serif'],
+        body: ['Exo 2', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
     },

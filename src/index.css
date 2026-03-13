@@ -1,17 +1,413 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Exo+2:wght@300;400;500;600;700&display=swap');
+
+/* ===== OVERRIDE GLOBAL PARA MODO OSCURO ===== */
+/* Esto fuerza el modo oscuro en TODO */
+* {
+  border-color: #2A2A2A !important;
+}
+
+html, body, #root {
+  background-color: #050505 !important;
+  color: #E5E7EB !important;
+}
+
+/* Sobrescribir todos los bg-white, bg-gray, etc */
+.bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-slate-50, .bg-slate-100 {
+  background-color: #111111 !important;
+}
+
+.bg-gray-50\/50 {
+  background-color: rgba(17, 24, 39, 0.5) !important;
+}
+
+/* Textos */
+.text-gray-900, .text-gray-800 {
+  color: #E5E7EB !important;
+}
+
+.text-gray-700 {
+  color: #9CA3AF !important;
+}
+
+.text-gray-600 {
+  color: #6B7280 !important;
+}
+
+.text-gray-500 {
+  color: #4B5563 !important;
+}
+
+/* Bordes */
+.border-gray-200, .border-gray-300 {
+  border-color: #2A2A2A !important;
+}
+
+.border-gray-100 {
+  border-color: #1F2937 !important;
+}
+
+/* Cards y contenedores */
+.rounded-xl, .rounded-2xl, .rounded-lg, .rounded-md {
+  background-color: #111111 !important;
+}
+
+.shadow-sm, .shadow-md, .shadow-lg {
+  box-shadow: none !important;
+}
+
+/* Inputs */
+input, textarea, select {
+  background-color: #0A0A0A !important;
+  color: #E5E7EB !important;
+  border-color: #2A2A2A !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #555555 !important;
+}
+
+/* Botones con bg-white */
+button.bg-white, .bg-white.button {
+  background-color: #111111 !important;
+  color: #E5E7EB !important;
+}
+
+/* Tablas */
+table {
+  background-color: #111111 !important;
+}
+
+th {
+  color: #9CA3AF !important;
+  background-color: #0A0A0A !important;
+}
+
+td {
+  color: #E5E7EB !important;
+  border-color: #2A2A2A !important;
+}
+
+/* Listas */
+li, ul {
+  color: #E5E7EB !important;
+}
+
+/* Span, small, etc */
+span, small {
+  color: inherit !important;
+}
+
+/* ===== rest of your CSS continues... ===== */
+
+/* ===== GLOW POTENTE PARA CARDS ===== */
+.hover\:shadow-\[0_0_30px_rgba\(255\2c 107\2c 0\2c 0\.3\)\]:hover {
+  box-shadow: 
+    0 0 30px rgba(255, 107, 0, 0.3),
+    0 0 60px rgba(255, 107, 0, 0.15),
+    inset 0 0 30px rgba(255, 107, 0, 0.05) !important;
+}
+
+/* Glow interno en cards */
+.hover\:bg-\[\#1A1A1A\]:hover {
+  background: linear-gradient(135deg, #1A1A1A 0%, #151515 100%) !important;
+}
+
+/* Border glow más intenso */
+.hover\:border-orange-500:hover {
+  border-color: #FF6B00 !important;
+  box-shadow: 
+    0 0 20px rgba(255, 107, 0, 0.4),
+    inset 0 0 20px rgba(255, 107, 0, 0.1);
+}
+
+/* Animación de glow pulsante para elementos activos */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 107, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 107, 0, 0.5), 0 0 60px rgba(255, 107, 0, 0.2);
+  }
+}
+
+.glow-active {
+  animation: glow-pulse 2s ease-in-out infinite;
+  border-color: #FF6B00 !important;
+}
 
 @theme {
-  /* Zonas metabólicas - Luis del Águila */
+  /* ===== FUENTES ===== */
+  --font-display: 'Chakra Petch', sans-serif;
+  --font-body: 'Exo 2', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* ===== COLORES BASE (Modo Oscuro) ===== */
+  --color-bg-primary: #050505;
+  --color-bg-secondary: #0A0A0A;
+  --color-bg-card: #111111;
+  --color-bg-elevated: #1A1A1A;
+  
+  /* ===== NARANJA NEON ACCENT ===== */
+  --color-neon-orange: #FF6B00;
+  --color-neon-orange-dim: #FF6B0040;
+  --color-neon-orange-light: #FF8C00;
+  
+  /* ===== COLORES SECUNDARIOS ===== */
+  --color-neon-cyan: #00D4FF;
+  --color-neon-cyan-dim: #00D4FF40;
+  --color-neon-purple: #A855F7;
+  --color-neon-purple-dim: #A855F740;
+  
+  /* ===== Zonas metabólicas ===== */
   --color-zone-1: #10B981;
   --color-zone-2: #F59E0B;
   --color-zone-3: #EF4444;
   
-  /* Estados */
-  --color-drift-ok: #10B981;
-  --color-drift-warning: #F59E0B;
-  --color-drift-bad: #EF4444;
-  
-  /* Fuentes */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* ===== Bordes ===== */
+  --color-border: #2A2A2A;
+  --color-border-glow: #FF6B00;
+}
+
+/* ===== BASE ===== */
+html {
+  font-family: var(--font-body);
+  background: var(--color-bg-primary);
+  color: #E5E7EB;
+}
+
+body {
+  min-height: 100vh;
+  background: 
+    radial-gradient(ellipse at top, #0F0F0F 0%, var(--color-bg-primary) 50%);
+}
+
+/* ===== TIPOGRAFÍA ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.text-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-neon-orange);
+  text-shadow: 
+    0 0 10px var(--color-neon-orange-dim),
+    0 0 30px var(--color-neon-orange-dim),
+    0 0 60px var(--color-neon-orange-dim);
+}
+
+.text-subtitle {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 1rem;
+  color: #888;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* ===== CARDS ===== */
+.card-glow {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.card-glow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-neon-orange), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card-glow:hover {
+  border-color: var(--color-neon-orange);
+  box-shadow: 
+    0 0 20px var(--color-neon-orange-dim),
+    inset 0 0 20px var(--color-neon-orange-dim);
+}
+
+.card-glow:hover::before {
+  opacity: 1;
+}
+
+/* ===== BOTONES ===== */
+.btn-glow {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 12px 28px;
+  border: 1px solid var(--color-neon-orange);
+  background: transparent;
+  color: var(--color-neon-orange);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-glow:hover {
+  background: var(--color-neon-orange);
+  color: #000;
+  box-shadow: 
+    0 0 20px var(--color-neon-orange),
+    0 0 40px var(--color-neon-orange-dim);
+}
+
+.btn-glow:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--color-neon-orange);
+  color: #000;
+  border-color: var(--color-neon-orange);
+}
+
+.btn-primary:hover {
+  background: var(--color-neon-orange-light);
+  border-color: var(--color-neon-orange-light);
+}
+
+/* ===== INPUTS ===== */
+.input-glow {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 14px 18px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: #E5E7EB;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input-glow:focus {
+  border-color: var(--color-neon-orange);
+  box-shadow: 0 0 20px var(--color-neon-orange-dim);
+}
+
+.input-glow::placeholder {
+  color: #555;
+}
+
+/* ===== NAVEGACIÓN ===== */
+.nav-glow {
+  background: rgba(5, 5, 5, 0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.nav-glow::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-neon-orange-dim), transparent);
+}
+
+/* ===== ESTADOS ===== */
+.status-online {
+  color: var(--color-neon-orange);
+  text-shadow: 0 0 8px var(--color-neon-orange);
+}
+
+.status-offline {
+  color: #444;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neon-orange-dim);
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes pulse-orange {
+  0%, 100% {
+    box-shadow: 0 0 15px var(--color-neon-orange-dim);
+  }
+  50% {
+    box-shadow: 0 0 30px var(--color-neon-orange);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-orange 2s ease-in-out infinite;
+}
+
+/* ===== UTILIDADES ===== */
+.text-glow {
+  text-shadow: 0 0 10px currentColor;
+}
+
+.border-glow {
+  border-color: var(--color-neon-orange);
+  box-shadow: 0 0 15px var(--color-neon-orange-dim);
+}
+
+/* ===== LABELS / TAGS ===== */
+.tag {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 3px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  color: #888;
+}
+
+.tag-orange {
+  border-color: var(--color-neon-orange);
+  color: var(--color-neon-orange);
+  background: var(--color-neon-orange-dim);
+}
+
+/* ===== FORM LABELS ===== */
+.label {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 8px;
+  display: block;
 }
