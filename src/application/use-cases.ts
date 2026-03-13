@@ -13,6 +13,7 @@ import { DomainActivity } from '../domain/activity/types';
 import { ActivityAnalysis, analyzeActivity } from '../domain/analysis';
 import { ZoneConfig } from '../domain/zones/types';
 import { useAuthStore } from '../store/auth';
+import { useClientStore } from '../store/client';
 import { useZonesStore } from '../store/zones';
 import { useActivitiesStore } from '../store/activities';
 
@@ -41,9 +42,11 @@ export async function authenticate(apiKey: string): Promise<boolean> {
 export function logout() {
   const authStore = useAuthStore.getState();
   const activitiesStore = useActivitiesStore.getState();
+  const clientStore = useClientStore.getState();
   
   authStore.clearApiKey();
   activitiesStore.clearCache();
+  clientStore.clear();
 }
 
 /**
@@ -71,7 +74,11 @@ export async function syncActivities(options?: {
   activitiesStore.setError(null);
   
   try {
-    const client = await createIntervalsClient({ apiKey });
+    // Use shared client from store
+    const clientStore = useClientStore.getState();
+    await clientStore.initialize();
+    const client = clientStore.getClient();
+    
     const activities = await fetchActivities(client, options);
     
     activitiesStore.setActivities(activities);
@@ -116,7 +123,10 @@ export async function analyzeActivityUseCase(
   }
   
   // Fetch activity with intervals
-  const client = createIntervalsClient({ apiKey });
+  const clientStore = useClientStore.getState();
+  await clientStore.initialize();
+  const client = clientStore.getClient();
+  
   const activity = await fetchActivityWithIntervals(client, activityId);
   
   // Fetch streams if requested (for full analysis)
