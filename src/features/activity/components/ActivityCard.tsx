@@ -4,9 +4,9 @@
  * Displays a summary of a running activity in the list.
  */
 
-import { Link } from 'react-router-dom';
-import { DomainActivity } from '../../domain/activity/types';
-import { formatDuration, formatPace } from '../../domain/analysis/math';
+import { Link } from '@tanstack/react-router';
+import { DomainActivity } from '../domain/activity.types';
+import { formatDuration, formatPace } from '../domain/math';
 
 interface ActivityCardProps {
   activity: DomainActivity;
@@ -45,7 +45,8 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
 
   return (
     <Link
-      to={`/activity/${activity.id}`}
+      to="/activity/$id"
+      params={{ id: activity.id }}
       onClick={handleClick}
       className="block w-full text-left bg-bg-card rounded-xl border border-border p-4 
         hover:border-orange-500 hover:shadow-[0_0_30px_rgba(255,107,0,0.3)] 
