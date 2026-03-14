@@ -107,7 +107,7 @@ function CustomTooltip({ active, payload }: any) {
         ? ZONE_COLORS.z2
         : ZONE_COLORS.z1;
   return (
-    <div className="bg-[#111111] border border-[#2A2A2A] rounded-lg p-3 shadow-lg">
+    <div className="bg-bg-card border border-border rounded-lg p-3 shadow-lg">
       <p className="text-gray-400 text-sm mb-1">{d?.timeLabel}</p>
       {hr != null && (
         <p style={{ color: hrColor }} className="font-semibold">

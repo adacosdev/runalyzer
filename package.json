@@ -13,11 +13,11 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
+    "@tanstack/react-router": "^1.167.0",
     "axios": "^1.13.6",
     "intervals-icu": "^2.2.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.1",
     "recharts": "^3.8.0",
     "zustand": "^5.0.11"
   },

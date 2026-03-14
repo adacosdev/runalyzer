@@ -20,6 +20,8 @@ export default {
         'bg-primary': '#050505',
         'bg-secondary': '#0A0A0A',
         'bg-card': '#111111',
+        'bg-elevated': '#1A1A1A',
+        'border': '#2A2A2A',
         'neon-orange': '#FF6B00',
       },
       fontFamily: {

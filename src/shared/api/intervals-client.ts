@@ -4,7 +4,7 @@
  * Real implementation using the intervals-icu library.
  */
 
-import { DomainActivity, DomainInterval, ActivityStream, StreamType } from '../domain/activity/types';
+import { DomainActivity, DomainInterval, ActivityStream, StreamType } from '../../features/activity/domain/activity.types';
 
 /**
  * Client configuration

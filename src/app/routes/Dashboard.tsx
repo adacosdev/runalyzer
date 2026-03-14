@@ -4,51 +4,40 @@
  * Main page showing list of recent activities.
  */
 
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore, useActivitiesStore, useZonesStore } from '../../store';
-import { syncActivities } from '../../application';
-import { ActivityCard } from '../components';
+import { useNavigate } from '@tanstack/react-router';
+import { useAuthStore } from '../../shared/store/auth.store';
+import { useZonesStore } from '../../shared/store/zones.store';
+import { useActivities, syncActivities } from '../../shared/application';
+import { ActivityCard } from '../../features/activity/components';
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
-  const { activities, isLoading, error, lastFetched, isCacheValid } = useActivitiesStore();
   const { zoneConfig } = useZonesStore();
-  const [needsSetup, setNeedsSetup] = useState(false);
-
-  // Auto-sync on mount if authenticated and cache is stale
-  useEffect(() => {
-    if (isAuthenticated && !isCacheValid() && !isLoading && activities.length === 0) {
-      syncActivities({ limit: 20 }).catch(console.error);
-    }
-  }, [isAuthenticated]); // Only run on mount and auth change
-
-  useEffect(() => {
-    if (isAuthenticated && !zoneConfig) {
-      setNeedsSetup(true);
-    }
-  }, [isAuthenticated, zoneConfig]);
+  const { data: activities = [], isLoading, error, refetch } = useActivities(20);
+  const needsSetup = isAuthenticated && !zoneConfig;
 
   const handleSync = async () => {
     try {
       await syncActivities({ limit: 20 });
+      refetch();
     } catch (err) {
       console.error('Sync failed:', err);
     }
   };
 
   if (!isAuthenticated) {
-    return <OnboardingPrompt />;
+    return <OnboardingPrompt navigate={navigate} />;
   }
 
   if (needsSetup) {
-    return <SetupPrompt />;
+    return <SetupPrompt navigate={navigate} />;
   }
 
   return (
-    <div className="min-h-screen bg-[#050505]">
+    <div className="min-h-screen bg-bg-primary">
       {/* Header */}
-      <header className="bg-[#111111] border-b border-[#2A2A2A] sticky top-0 z-10">
+      <header className="bg-bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-orange-500">Runalyzer</h1>
           <button
@@ -65,7 +54,7 @@ export function DashboardPage() {
       <main className="max-w-2xl mx-auto px-4 py-6">
         {error && (
           <div className="mb-4 p-4 bg-red-900/20 border border-red-800 rounded-lg text-red-400">
-            {error}
+            {error.message}
           </div>
         )}
 
@@ -78,8 +67,7 @@ export function DashboardPage() {
                 key={activity.id}
                 activity={activity}
                 onClick={() => {
-                  // Navigate to activity detail
-                  window.location.hash = `/activity/${activity.id}`;
+                  navigate({ to: '/activity/$id', params: { id: activity.id } });
                 }}
               />
             ))}
@@ -90,12 +78,10 @@ export function DashboardPage() {
   );
 }
 
-function OnboardingPrompt() {
-  const navigate = useNavigate();
-  
+function OnboardingPrompt({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-[#111111] rounded-2xl border border-[#2A2A2A] p-8 text-center">
+    <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-bg-card rounded-2xl border border-border p-8 text-center">
         <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-3xl">🏃</span>
         </div>
@@ -105,7 +91,7 @@ function OnboardingPrompt() {
           Conecta tu cuenta de Intervals.icu para empezar.
         </p>
         <button
-          onClick={() => navigate('/setup')}
+          onClick={() => navigate({ to: '/setup' })}
           className="block w-full py-3 bg-orange-500 text-black font-medium rounded-lg hover:bg-orange-400"
         >
           Conectar Intervals.icu
@@ -115,12 +101,10 @@ function OnboardingPrompt() {
   );
 }
 
-function SetupPrompt() {
-  const navigate = useNavigate();
-  
+function SetupPrompt({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-[#111111] rounded-2xl border border-[#2A2A2A] p-8 text-center">
+    <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-bg-card rounded-2xl border border-border p-8 text-center">
         <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-3xl">⚙️</span>
         </div>
@@ -129,7 +113,7 @@ function SetupPrompt() {
           Para analizar tus entrenamientos, necesitamos configurar tus zonas de frecuencia cardiaca.
         </p>
         <button
-          onClick={() => navigate('/calibrate')}
+          onClick={() => navigate({ to: '/calibrate' })}
           className="block w-full py-3 bg-orange-500 text-black font-medium rounded-lg hover:bg-orange-400"
         >
           Calibrar zonas

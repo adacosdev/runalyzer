@@ -7,7 +7,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { ZoneConfig, getDefaultZoneConfig, CalibrationMethod } from '../domain/zones/types';
+import { ZoneConfig, getDefaultZoneConfig, CalibrationMethod } from '../../features/setup/domain/zones.types';
 
 interface ZonesState {
   // State

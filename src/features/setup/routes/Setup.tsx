@@ -5,10 +5,11 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore, useZonesStore } from '../../store';
-import { authenticate } from '../../application';
-import { getDefaultZoneConfig, isValidZoneConfig } from '../../domain/zones/types';
+import { useNavigate } from '@tanstack/react-router';
+import { useAuthStore } from '../../../shared/store/auth.store';
+import { useZonesStore } from '../../../shared/store/zones.store';
+import { authenticate } from '../../../shared/application';
+import { getDefaultZoneConfig } from '../domain/zones.types';
 
 type SetupStep = 'connect' | 'age' | 'calibrate';
 
@@ -65,11 +66,11 @@ export function SetupPage() {
       lastCalibrated: Date.now(),
     });
     
-    navigate('/');
+    navigate({ to: '/' });
   };
   
   const handleCalibrateComplete = () => {
-    navigate('/');
+    navigate({ to: '/' });
   };
 
   return (
@@ -88,7 +89,7 @@ export function SetupPage() {
 
         {/* Step 1: Connect */}
         {step === 'connect' && (
-          <div className="bg-[#111111] rounded-2xl border border-[#2A2A2A] p-8">
+          <div className="bg-bg-card rounded-2xl border border-border p-8">
             <h1 className="text-2xl font-bold text-white mb-2">
               Conecta Intervals.icu
             </h1>
@@ -124,7 +125,7 @@ export function SetupPage() {
 
         {/* Step 2: Age */}
         {step === 'age' && (
-          <div className="bg-[#111111] rounded-2xl border border-[#2A2A2A] p-8">
+          <div className="bg-bg-card rounded-2xl border border-border p-8">
             <h1 className="text-2xl font-bold text-white mb-2">
               Cuantos anos tienes?
             </h1>
@@ -152,7 +153,7 @@ export function SetupPage() {
 
         {/* Step 3: Calibrate */}
         {step === 'calibrate' && !manualMode && (
-          <div className="bg-[#111111] rounded-2xl border border-[#2A2A2A] p-8">
+          <div className="bg-bg-card rounded-2xl border border-border p-8">
             <h1 className="text-2xl font-bold text-white mb-2">
               Tus zonas
             </h1>
@@ -207,7 +208,7 @@ export function SetupPage() {
 
         {/* Manual Zone Input */}
         {manualMode && (
-          <div className="bg-[#111111] rounded-2xl border border-[#2A2A2A] p-8">
+          <div className="bg-bg-card rounded-2xl border border-border p-8">
             <h1 className="text-2xl font-bold text-white mb-2">
               Tus zonas
             </h1>

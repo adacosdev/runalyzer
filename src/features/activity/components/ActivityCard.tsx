@@ -47,9 +47,9 @@ export function ActivityCard({ activity, onClick }: ActivityCardProps) {
     <Link
       to={`/activity/${activity.id}`}
       onClick={handleClick}
-      className="block w-full text-left bg-[#111111] rounded-xl border border-[#2A2A2A] p-4 
+      className="block w-full text-left bg-bg-card rounded-xl border border-border p-4 
         hover:border-orange-500 hover:shadow-[0_0_30px_rgba(255,107,0,0.3)] 
-        hover:bg-[#1A1A1A] transition-all duration-300"
+        hover:bg-bg-elevated transition-all duration-300"
     >
       {/* Glow effect inside */}
       <div className="relative">

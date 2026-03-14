@@ -4,7 +4,7 @@
  * Main application entry point.
  */
 
-import { AppRouter } from './presentation/router/AppRouter';
+import { AppRouter } from './app/bootstrap/AppRouter';
 
 function App() {
   return <AppRouter />;
