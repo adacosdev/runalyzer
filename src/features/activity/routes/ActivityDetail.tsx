@@ -8,8 +8,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useActivityStreams } from '../../../shared/application';
+import { useZonesStore } from '../../../shared/store/zones.store';
 import { analyzeActivity } from '../domain';
 import { DomainActivity } from '../domain/activity.types';
+import { ActivityAnalysis } from '../domain/types';
 import { 
   CardiacDriftChart, 
   ZoneDistributionBar, 
@@ -17,15 +19,13 @@ import {
   ActivityCharts,
 } from '../components';
 
-// TODO: Fix types - these should come from domain analysis
-type ActivityAnalysis = any;
-
 export function ActivityDetailPage() {
   const { id } = useParams({ from: '/activity/$id' });
   const navigate = useNavigate();
+  const zoneConfig = useZonesStore((state) => state.zoneConfig);
   
   const [analysis, setAnalysis] = useState<ActivityAnalysis | null>(null);
-  const [activity, setActivity] = useState<DomainActivity | null>(null);
+  const [activity] = useState<DomainActivity | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
 
   const { data: streams, isLoading: loadingStreams, error } = useActivityStreams(
@@ -40,14 +40,14 @@ export function ActivityDetailPage() {
     
     try {
       // Analyze activity with streams
-      const result = analyzeActivity(activity!, streams);
+      const result = analyzeActivity(activity, streams, zoneConfig);
       setAnalysis(result);
     } catch (err) {
       console.error('Analysis failed:', err);
     } finally {
       setAnalyzing(false);
     }
-  }, [id, streams]);
+  }, [id, streams, activity, zoneConfig]);
 
   if (!id) {
     return (

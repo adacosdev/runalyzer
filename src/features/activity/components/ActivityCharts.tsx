@@ -14,16 +14,11 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
-import { useZonesStore } from '../../store/zones';
-
-interface StreamData {
-  time: number[];
-  heartrate?: number[];
-  velocity_smooth?: number[];
-}
+import { useZonesStore } from '../../../shared/store/zones.store';
+import { ActivityStream } from '../domain/activity.types';
 
 interface ActivityChartsProps {
-  streams?: StreamData;
+  streams?: ActivityStream[];
 }
 
 const ZONE_COLORS = {
@@ -53,18 +48,24 @@ function velocityToPace(velocity: number): number {
   return 1000 / velocity;
 }
 
-function transformStreamsToChartData(streams?: StreamData): any[] {
-  if (!streams?.time?.length) return [];
+function transformStreamsToChartData(streams?: ActivityStream[]): any[] {
+  if (!streams?.length) return [];
 
-  return streams.time.map((t, i) => ({
+  const time = streams.find((s) => s.type === 'time')?.data ?? [];
+  const heartrate = streams.find((s) => s.type === 'heartrate')?.data;
+  const velocitySmooth = streams.find((s) => s.type === 'velocity_smooth')?.data;
+
+  if (!time.length) return [];
+
+  return time.map((t, i) => ({
     time: t,
     timeLabel: formatTime(t),
-    heartrate: streams.heartrate?.[i],
-    pace: streams.velocity_smooth?.[i]
-      ? velocityToPace(streams.velocity_smooth[i])
+    heartrate: heartrate?.[i],
+    pace: velocitySmooth?.[i]
+      ? velocityToPace(velocitySmooth[i])
       : undefined,
-    paceLabel: streams.velocity_smooth?.[i]
-      ? formatPace(velocityToPace(streams.velocity_smooth[i]))
+    paceLabel: velocitySmooth?.[i]
+      ? formatPace(velocityToPace(velocitySmooth[i]))
       : undefined,
   }));
 }
