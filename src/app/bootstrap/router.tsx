@@ -1,6 +1,7 @@
 import { createRouter, createRootRoute, createRoute, Outlet } from '@tanstack/react-router';
 import { DashboardPage } from '../routes/Dashboard';
 import { SetupPage } from '../../features/setup/routes/Setup';
+import { ActivityDetailPage } from '../../features/activity/routes/ActivityDetail';
 
 // Root route with layout
 const rootRoute = createRootRoute({
@@ -32,7 +33,7 @@ const calibrateRoute = createRoute({
 const activityRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/activity/$id',
-  component: () => import('../../features/activity/routes/ActivityDetail').then(m => m.ActivityDetailPage),
+  component: ActivityDetailPage,
 });
 
 export const routeTree = rootRoute.addChildren([
