@@ -7,20 +7,21 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useAuthStore } from '../../shared/store/auth.store';
 import { useZonesStore } from '../../shared/store/zones.store';
-import { useActivities, syncActivities } from '../../shared/application';
-import { ActivityCard } from '../../features/activity/components';
+import { useActivities, useHome30dSummary, syncActivities } from '../../shared/application';
+import { ActivityCard, Home30dSummaryCard } from '../../features/activity/components';
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const { zoneConfig } = useZonesStore();
-  const { data: activities = [], isLoading, error, refetch } = useActivities(20);
   const needsSetup = isAuthenticated && !zoneConfig;
+  const { data: activities = [], isLoading, error, refetch } = useActivities(20);
+  const summaryQuery = useHome30dSummary({ enabled: !needsSetup });
 
   const handleSync = async () => {
     try {
       await syncActivities({ limit: 20 });
-      refetch();
+      await Promise.allSettled([refetch(), summaryQuery.refetch()]);
     } catch (err) {
       console.error('Sync failed:', err);
     }
@@ -52,6 +53,15 @@ export function DashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-2xl mx-auto px-4 py-6">
+        <Home30dSummaryCard
+          isLoading={summaryQuery.isLoading}
+          error={summaryQuery.error ?? null}
+          summary={summaryQuery.data?.summary}
+          onRetry={() => {
+            void summaryQuery.refetch();
+          }}
+        />
+
         {error && (
           <div className="mb-4 p-4 bg-red-900/20 border border-red-800 rounded-lg text-red-400">
             {error.message}
