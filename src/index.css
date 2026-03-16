@@ -48,7 +48,10 @@ html, body, #root {
 }
 
 /* Cards y contenedores */
-.rounded-xl, .rounded-2xl, .rounded-lg, .rounded-md {
+.rounded-xl:not(button):not(a),
+.rounded-2xl:not(button):not(a),
+.rounded-lg:not(button):not(a),
+.rounded-md:not(button):not(a) {
   background-color: #111111 !important;
 }
 
