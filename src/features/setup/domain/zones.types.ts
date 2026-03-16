@@ -5,8 +5,6 @@
  * Configuration can be either user-provided or estimated.
  */
 
-import { CardiacDriftResult } from '../analysis/types';
-
 /**
  * User's zone configuration based on their personal thresholds
  */
