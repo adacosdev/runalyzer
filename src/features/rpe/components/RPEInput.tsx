@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { RPE_LABELS, RPE_COLORS, useRPEInjuriesStore } from '../../store/rpe-injuries';
+import { RPE_LABELS, RPE_COLORS, useRPEInjuriesStore } from '../../../shared/store/rpe.store';
 
 interface RPEInputProps {
   activityId: string;

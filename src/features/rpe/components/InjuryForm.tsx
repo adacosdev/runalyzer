@@ -9,7 +9,7 @@ import {
   BODY_PART_LABELS, 
   useRPEInjuriesStore,
   BodyPart 
-} from '../../store/rpe-injuries';
+} from '../../../shared/store/rpe.store';
 
 interface InjuryFormProps {
   activityId?: string;
