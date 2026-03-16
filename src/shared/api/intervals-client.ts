@@ -14,6 +14,16 @@ export interface IntervalsClientConfig {
   athleteId?: string;
 }
 
+export interface RollingWindowActivitiesOptions {
+  oldest: string;
+  newest: string;
+}
+
+export interface RollingWindowBounds {
+  oldest: string;
+  newest: string;
+}
+
 /**
  * Real Intervals.icu client
  */
@@ -60,6 +70,47 @@ export async function fetchActivities(
     console.error('Error fetching activities:', e.message);
     return [];
   }
+}
+
+export async function fetchRollingWindowActivities(
+  client: any,
+  options: RollingWindowActivitiesOptions
+): Promise<DomainActivity[]> {
+  const { oldest, newest } = options;
+
+  try {
+    const response = await client.activities.listActivities({
+      oldest,
+      newest,
+    });
+
+    if (!Array.isArray(response)) {
+      throw new Error('Intervals API returned an invalid activities payload');
+    }
+
+    return response.map((raw: any) => mapRawActivityToDomain(raw));
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to fetch rolling window activities: ${message}`);
+  }
+}
+
+export function buildRollingWindowBounds(windowEvaluatedAt: Date, windowDays = 30): RollingWindowBounds {
+  if (!(windowEvaluatedAt instanceof Date) || Number.isNaN(windowEvaluatedAt.getTime())) {
+    throw new Error('windowEvaluatedAt must be a valid Date');
+  }
+
+  if (!Number.isInteger(windowDays) || windowDays <= 0) {
+    throw new Error('windowDays must be a positive integer');
+  }
+
+  const oldestDate = new Date(windowEvaluatedAt);
+  oldestDate.setUTCDate(oldestDate.getUTCDate() - windowDays);
+
+  return {
+    oldest: oldestDate.toISOString(),
+    newest: windowEvaluatedAt.toISOString(),
+  };
 }
 
 /**
