@@ -7,6 +7,8 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { queryClient } from '../queryClient';
+import { clearHome30dSummaryQueryCache } from '../queryKeys';
 
 interface AuthState {
   // State
@@ -30,17 +32,30 @@ export const useAuthStore = create<AuthState>()(
       isValidating: false,
       error: null,
       
-      setApiKey: (apiKey) => set({ 
-        apiKey, 
-        isAuthenticated: true, 
-        error: null 
-      }),
+      setApiKey: (apiKey) => {
+        const previousApiKey = get().apiKey;
+        if (previousApiKey && previousApiKey !== apiKey) {
+          clearHome30dSummaryQueryCache(queryClient);
+        }
+
+        set({ 
+          apiKey, 
+          isAuthenticated: true, 
+          error: null 
+        });
+      },
       
-      clearApiKey: () => set({ 
-        apiKey: null, 
-        isAuthenticated: false,
-        error: null,
-      }),
+      clearApiKey: () => {
+        if (get().apiKey) {
+          clearHome30dSummaryQueryCache(queryClient);
+        }
+
+        set({ 
+          apiKey: null, 
+          isAuthenticated: false,
+          error: null,
+        });
+      },
       
       setValidating: (isValidating) => set({ isValidating }),
       
