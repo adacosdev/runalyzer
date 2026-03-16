@@ -16,7 +16,7 @@ import {
   zoneSecondsToPercent,
   roundTo 
 } from './math';
-import { ZoneConfig, getZoneThresholds } from '../zones/types';
+import { ZoneConfig, getZoneThresholds } from '../../setup/domain/zones.types';
 
 /**
  * Analyze zone distribution from heart rate data

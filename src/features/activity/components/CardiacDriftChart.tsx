@@ -5,7 +5,7 @@
  */
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { CardiacDriftResult } from '../../domain/analysis/types';
+import { CardiacDriftResult } from '../domain/types';
 
 interface CardiacDriftChartProps {
   result: CardiacDriftResult;

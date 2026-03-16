@@ -5,7 +5,7 @@
  * All these types are pure data structures with no dependencies.
  */
 
-import { ActivityStream } from '../activity/types';
+import { ActivityStream } from './activity.types';
 
 /**
  * Result of Cardiac Drift analysis

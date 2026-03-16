@@ -4,7 +4,7 @@
  * Displays up to 3 actionable insights from the analysis.
  */
 
-import { ActionableInsight } from '../../domain/analysis/types';
+import { ActionableInsight } from '../domain/types';
 
 interface ActionableFeedbackProps {
   insights: ActionableInsight[];

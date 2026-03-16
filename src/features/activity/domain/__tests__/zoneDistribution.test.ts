@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { analyzeZoneDistribution } from '../zoneDistribution';
-import { ZoneConfig } from '../../zones/types';
+import { ZoneConfig } from '../../../setup/domain/zones.types';
 
 describe('analyzeZoneDistribution', () => {
   const createZoneConfig = (overrides: Partial<ZoneConfig> = {}): ZoneConfig => ({

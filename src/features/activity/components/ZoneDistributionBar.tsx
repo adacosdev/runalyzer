@@ -4,7 +4,7 @@
  * Visualizes time distribution across the 3 metabolic zones.
  */
 
-import { ZoneDistribution } from '../../domain/analysis/types';
+import { ZoneDistribution } from '../domain/types';
 
 interface ZoneDistributionBarProps {
   distribution: ZoneDistribution;
