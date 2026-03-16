@@ -4,5 +4,8 @@ export * from './zoneDistribution';
 export * from './internalExternalLoad';
 export * from './lactateClearance';
 export * from './feedbackGenerator';
+export * from './analyzeActivity';
 export * from './math';
 export * from './types';
+export * from './home30dSummary';
+export * from './home30dSummary.types';
