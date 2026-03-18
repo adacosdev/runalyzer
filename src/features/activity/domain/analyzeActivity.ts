@@ -48,9 +48,38 @@ function hasExplicitZ1Semantics(activity: DomainActivity | null | undefined): bo
   return z1Seconds >= z2Seconds + z3Seconds;
 }
 
-function isIntervalSession(activity: DomainActivity | null | undefined): boolean {
+function hasZ2IntervalSession(
+  activity: DomainActivity | null | undefined,
+  zoneConfig: ZoneConfig
+): boolean {
   const intervals = activity?.icuIntervals ?? [];
-  return intervals.some((interval) => HIGH_INTENSITY_INTERVAL_TYPES.has(interval.type) && !interval.isRecovery);
+
+  if (intervals.some((interval) => HIGH_INTENSITY_INTERVAL_TYPES.has(interval.type) && !interval.isRecovery)) {
+    return true;
+  }
+
+  return intervals.some((interval) => {
+    if (interval.isRecovery) {
+      return false;
+    }
+
+    if (interval.duration < 120) {
+      return false;
+    }
+
+    if (interval.averagePace == null || interval.averagePace > ACTIVE_PACE_THRESHOLD_SECONDS_PER_KM) {
+      return false;
+    }
+
+    if (interval.averageHeartrate == null) {
+      return false;
+    }
+
+    return (
+      interval.averageHeartrate >= zoneConfig.z1MaxHR
+      && interval.averageHeartrate <= zoneConfig.z2MaxHR
+    );
+  });
 }
 
 function getHeartRateExtremes(
@@ -108,7 +137,7 @@ export function analyzeActivity(
     activityDurationSec: activity?.duration ?? 0,
     explicitZ1Semantics,
   });
-  const sessionType = isIntervalSession(activity) ? 'interval_z2' : semantics.sessionType;
+  const sessionType = hasZ2IntervalSession(activity, effectiveZoneConfig) ? 'interval_z2' : semantics.sessionType;
   const activeSampleIndexes = new Set(
     paceClassifications
       .filter((sample) => sample.classLabel === 'active')
@@ -139,7 +168,12 @@ export function analyzeActivity(
           type: i.type,
         })),
         undefined,
-        effectiveZoneConfig
+        effectiveZoneConfig,
+        {
+          sessionType,
+          activeFcMax,
+          sessionFcMax,
+        }
       )
     : null;
 

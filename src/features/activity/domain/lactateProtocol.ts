@@ -166,9 +166,10 @@ function buildPeakHeartRate(
 function buildIntervalResult(
   interval: DomainInterval,
   timeData: number[],
-  heartRateData: number[]
+  heartRateData: number[],
+  recoveryInterval?: DomainInterval
 ): LactateProtocolIntervalResult {
-  const intervalEndSec = interval.startTime + interval.duration;
+  const intervalEndSec = recoveryInterval?.startTime ?? (interval.startTime + interval.duration);
   const peak = buildPeakHeartRate(timeData, heartRateData, interval.startTime, intervalEndSec);
   if (peak.peakHr == null) {
     return {
@@ -231,8 +232,18 @@ export function analyzeLactateProtocol(input: LactateProtocolInput): LactateProt
     };
   }
 
-  const activeIntervals = intervals.filter((interval) => !interval.isRecovery);
-  const intervalResults = activeIntervals.map((interval) => buildIntervalResult(interval, timeData, heartRateData));
+  const intervalResults: LactateProtocolIntervalResult[] = [];
+
+  for (let index = 0; index < intervals.length; index += 1) {
+    const activeInterval = intervals[index];
+    if (activeInterval.isRecovery) {
+      continue;
+    }
+
+    const nextInterval = intervals[index + 1];
+    const recoveryInterval = nextInterval?.isRecovery ? nextInterval : undefined;
+    intervalResults.push(buildIntervalResult(activeInterval, timeData, heartRateData, recoveryInterval));
+  }
 
   return {
     intervals: intervalResults,

@@ -14,6 +14,12 @@ import { average, roundTo } from './math';
 import { ZoneConfig } from '../../setup/domain/zones.types';
 import { ACTIVE_PACE_THRESHOLD_SECONDS_PER_KM } from './intervalClassification';
 
+interface SessionLoadContext {
+  sessionType?: 'interval_z2' | 'rodaje_z1' | 'z1_warmup_cooldown' | 'mixed';
+  activeFcMax?: number | null;
+  sessionFcMax?: number | null;
+}
+
 /**
  * Analyze internal vs external load from interval data
  * 
@@ -30,7 +36,8 @@ export function analyzeInternalExternalLoad(
     type: string;
   }>,
   userRPE?: number[],
-  zoneConfig?: ZoneConfig | null
+  zoneConfig?: ZoneConfig | null,
+  sessionContext?: SessionLoadContext
 ): InternalExternalLoad {
   const loadIntervals: LoadInterval[] = [];
   
@@ -83,7 +90,7 @@ export function analyzeInternalExternalLoad(
     intervals: loadIntervals,
     sessionAvgPaceMinKm: roundTo(sessionAvgPace),
     sessionAvgHR: roundTo(sessionAvgHR),
-    sessionVerdict: generateSessionVerdict(sessionAvgHR, sessionAvgPace, zoneConfig),
+    sessionVerdict: generateSessionVerdict(sessionAvgHR, sessionAvgPace, zoneConfig, sessionContext),
   };
 }
 
@@ -137,10 +144,28 @@ function estimateHRForRPE(rpe: number): number {
 function generateSessionVerdict(
   avgHR: number,
   avgPace: number,
-  zoneConfig?: ZoneConfig | null
+  zoneConfig?: ZoneConfig | null,
+  sessionContext?: SessionLoadContext
 ): string {
   const z1Max = zoneConfig?.z1MaxHR ?? 120;
   const z2Max = zoneConfig?.z2MaxHR ?? 150;
+
+  if (sessionContext?.sessionType === 'interval_z2') {
+    if (sessionContext.activeFcMax != null && sessionContext.activeFcMax > z2Max) {
+      return 'Sesión de umbral con intensidad por encima de Z2. Vigilá el control en los bloques activos.';
+    }
+
+    return 'Sesión de umbral. Trabajo principal en Z2 con carga interna coherente.';
+  }
+
+  if (sessionContext?.sessionType === 'rodaje_z1' || sessionContext?.sessionType === 'z1_warmup_cooldown') {
+    const sessionFcMax = sessionContext.sessionFcMax ?? avgHR;
+    if (sessionFcMax > z1Max) {
+      return 'Rodaje por encima de Z1. Cuidá la intensidad para sostener el estímulo aeróbico.';
+    }
+
+    return 'Sesión de rodaje en Z1. Carga interna controlada.';
+  }
 
   if (avgHR < z1Max) {
     return 'Sesión de recuperación. Baja carga interna, enfocate en mantener la continuidad.';
