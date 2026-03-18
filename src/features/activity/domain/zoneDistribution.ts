@@ -80,7 +80,7 @@ function generateZoneVerdict(
   }
   
   // Zone 2 is for threshold work
-  if (z2Percent > 25) {
+  if (z2Percent > 50) {
     message += 'Exceso de tiempo en Z2. Solo sesiones específicas deberían estar en esta zona. ';
   } else if (z2Percent > 15) {
     message += 'Tiempo adecuado en Z2 para trabajo de umbral. ';
