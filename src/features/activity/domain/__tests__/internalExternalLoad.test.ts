@@ -6,6 +6,18 @@
 
 import { describe, it, expect } from 'vitest';
 import { analyzeInternalExternalLoad, calculateTrainingStress } from '../internalExternalLoad';
+import type { ZoneConfig } from '../../../setup/domain/zones.types';
+
+function makeZoneConfig(z1MaxHR: number, z2MaxHR: number): ZoneConfig {
+  return {
+    z1MaxHR,
+    z2MaxHR,
+    maxHR: z2MaxHR + 20,
+    isEstimated: false,
+    calibrationMethod: 'manual',
+    lastCalibrated: Date.now(),
+  };
+}
 
 describe('analyzeInternalExternalLoad', () => {
   describe('interval analysis', () => {
@@ -44,6 +56,19 @@ describe('analyzeInternalExternalLoad', () => {
       
       expect(result.intervals.length).toBe(1);
       expect(result.intervals[0].name).toBe('Normal');
+    });
+
+    it('should ignore recovery pace segments slower than 10:00/km', () => {
+      const intervals = [
+        { name: 'Activo', averagePace: 300, averageHeartrate: 150, duration: 600, type: 'steady' },
+        { name: 'Recuperacion', averagePace: 620, averageHeartrate: 120, duration: 600, type: 'recovery' },
+      ];
+
+      const result = analyzeInternalExternalLoad(intervals);
+
+      expect(result.intervals).toHaveLength(1);
+      expect(result.intervals[0].name).toBe('Activo');
+      expect(result.sessionAvgPaceMinKm).toBe(300);
     });
   });
 
@@ -118,12 +143,68 @@ describe('analyzeInternalExternalLoad', () => {
 
   describe('edge cases', () => {
     it('should handle empty intervals', () => {
-      const intervals: any[] = [];
+      const intervals: Array<{
+        name: string;
+        averagePace: number | null;
+        averageHeartrate: number | null;
+        duration: number;
+        type: string;
+      }> = [];
       
       const result = analyzeInternalExternalLoad(intervals);
       
       expect(result.intervals.length).toBe(0);
       expect(result.sessionVerdict).toContain('No hay suficientes datos');
+    });
+  });
+
+  describe('zoneConfig-based thresholds', () => {
+    const zoneConfig = makeZoneConfig(140, 165);
+
+    it('uses z1MaxHR boundary — interval below z1MaxHR gets low-intensity verdict', () => {
+      const intervals = [
+        { name: 'Suave', averagePace: 360, averageHeartrate: 135, duration: 1800, type: 'steady' },
+      ];
+
+      const result = analyzeInternalExternalLoad(intervals, undefined, zoneConfig);
+
+      expect(result.intervals[0].verdict).toContain('baja');
+    });
+
+    it('uses z2MaxHR boundary — interval above z2MaxHR gets high-intensity verdict', () => {
+      const intervals = [
+        { name: 'Series', averagePace: 250, averageHeartrate: 170, duration: 300, type: 'interval' },
+      ];
+
+      const result = analyzeInternalExternalLoad(intervals, undefined, zoneConfig);
+
+      // avgHR 170 > z2MaxHR 165 + 15 = 180? No, 170 < 180 → umbral/VO2Max bucket
+      // 165 < 170 < 165+15=180 → "Intensidad alta"
+      expect(result.intervals[0].verdict).toContain('alta');
+    });
+
+    it('interval in z1-z2 range gets moderate-intensity verdict', () => {
+      const intervals = [
+        { name: 'Tempo', averagePace: 290, averageHeartrate: 155, duration: 600, type: 'steady' },
+      ];
+
+      const result = analyzeInternalExternalLoad(intervals, undefined, zoneConfig);
+
+      // 140 < 155 < 165 → moderada
+      expect(result.intervals[0].verdict).toContain('moderada');
+    });
+
+    it('calling without zoneConfig produces same verdict structure as before (regression guard)', () => {
+      const intervals = [
+        { name: 'Rodaje', averagePace: 300, averageHeartrate: 140, duration: 3600, type: 'steady' },
+      ];
+
+      const withoutConfig = analyzeInternalExternalLoad(intervals);
+      const withNullConfig = analyzeInternalExternalLoad(intervals, undefined, null);
+
+      // Both must produce a valid verdict (string) and same session verdict
+      expect(typeof withoutConfig.sessionVerdict).toBe('string');
+      expect(withoutConfig.sessionVerdict).toBe(withNullConfig.sessionVerdict);
     });
   });
 });

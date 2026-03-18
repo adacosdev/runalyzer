@@ -11,6 +11,14 @@
 
 import { InternalExternalLoad, LoadInterval } from './types';
 import { average, roundTo } from './math';
+import { ZoneConfig } from '../../setup/domain/zones.types';
+import { ACTIVE_PACE_THRESHOLD_SECONDS_PER_KM } from './intervalClassification';
+
+interface SessionLoadContext {
+  sessionType?: 'interval_z2' | 'rodaje_z1' | 'z1_warmup_cooldown' | 'mixed';
+  activeFcMax?: number | null;
+  sessionFcMax?: number | null;
+}
 
 /**
  * Analyze internal vs external load from interval data
@@ -27,7 +35,9 @@ export function analyzeInternalExternalLoad(
     duration: number;
     type: string;
   }>,
-  userRPE?: number[]
+  userRPE?: number[],
+  zoneConfig?: ZoneConfig | null,
+  sessionContext?: SessionLoadContext
 ): InternalExternalLoad {
   const loadIntervals: LoadInterval[] = [];
   
@@ -37,6 +47,7 @@ export function analyzeInternalExternalLoad(
     // Skip intervals without required data
     if (!interval.averagePace || !interval.averageHeartrate) continue;
     if (interval.duration < 30) continue; // Skip very short intervals
+    if (interval.averagePace > ACTIVE_PACE_THRESHOLD_SECONDS_PER_KM) continue;
     
     const avgPace = interval.averagePace;
     const avgHR = interval.averageHeartrate;
@@ -53,7 +64,7 @@ export function analyzeInternalExternalLoad(
       avgHR: roundTo(avgHR),
       rpe,
       hrToPaceEfficiency: roundTo(hrToPaceEfficiency, 3),
-      verdict: generateLoadVerdict(avgHR, avgPace, rpe),
+      verdict: generateLoadVerdict(avgHR, avgPace, rpe, zoneConfig),
     });
   }
   
@@ -67,7 +78,9 @@ export function analyzeInternalExternalLoad(
   }
   
   // Calculate session averages
-  const allPaces = loadIntervals.map(i => i.avgPaceMps).filter(p => p > 0);
+  const allPaces = loadIntervals
+    .map((interval) => interval.avgPaceMps)
+    .filter((pace) => pace > 0 && pace <= ACTIVE_PACE_THRESHOLD_SECONDS_PER_KM);
   const allHRs = loadIntervals.map(i => i.avgHR).filter(h => h > 0);
   
   const sessionAvgPace = average(allPaces);
@@ -77,7 +90,7 @@ export function analyzeInternalExternalLoad(
     intervals: loadIntervals,
     sessionAvgPaceMinKm: roundTo(sessionAvgPace),
     sessionAvgHR: roundTo(sessionAvgHR),
-    sessionVerdict: generateSessionVerdict(sessionAvgHR, sessionAvgPace),
+    sessionVerdict: generateSessionVerdict(sessionAvgHR, sessionAvgPace, zoneConfig, sessionContext),
   };
 }
 
@@ -87,29 +100,30 @@ export function analyzeInternalExternalLoad(
 function generateLoadVerdict(
   avgHR: number,
   avgPace: number,
-  rpe?: number
+  rpe?: number,
+  zoneConfig?: ZoneConfig | null
 ): string {
-  // Simple heuristic based on typical training zones
-  // In a real implementation, this would use the user's zone config
-  
   // If we have RPE, cross-reference with HR
   if (rpe !== undefined) {
     const hrExpected = estimateHRForRPE(rpe);
     const hrDiff = Math.abs(avgHR - hrExpected);
-    
+
     if (hrDiff > 20) {
-      return rpe > avgHR / 10 
+      return rpe > avgHR / 10
         ? 'RPE más alto que la respuesta de FC - posiblemente ejecutaste más fuerte de lo que sientes.'
         : 'FC más alta de lo esperado para este RPE - el cuerpo estaba fatigado o bajo estrés.';
     }
   }
-  
-  // Without RPE, use general heuristics
-  if (avgHR < 120) {
+
+  // Use zone config thresholds when available, fall back to sensible defaults
+  const z1Max = zoneConfig?.z1MaxHR ?? 120;
+  const z2Max = zoneConfig?.z2MaxHR ?? 150;
+
+  if (avgHR < z1Max) {
     return 'Intensidad baja - trabajo de recuperación o aerobic suave.';
-  } else if (avgHR < 150) {
+  } else if (avgHR < z2Max) {
     return 'Intensidad moderada - trabajo de zona 1-2, desarrollo de base.';
-  } else if (avgHR < 175) {
+  } else if (avgHR < z2Max + 15) {
     return 'Intensidad alta - trabajo de umbral o VO2Max.';
   } else {
     return 'Intensidad máxima - sprint o esfuerzo de carrera.';
@@ -127,12 +141,37 @@ function estimateHRForRPE(rpe: number): number {
 /**
  * Generate session verdict
  */
-function generateSessionVerdict(avgHR: number, avgPace: number): string {
-  if (avgHR < 120) {
+function generateSessionVerdict(
+  avgHR: number,
+  avgPace: number,
+  zoneConfig?: ZoneConfig | null,
+  sessionContext?: SessionLoadContext
+): string {
+  const z1Max = zoneConfig?.z1MaxHR ?? 120;
+  const z2Max = zoneConfig?.z2MaxHR ?? 150;
+
+  if (sessionContext?.sessionType === 'interval_z2') {
+    if (sessionContext.activeFcMax != null && sessionContext.activeFcMax > z2Max) {
+      return 'Sesión de umbral con intensidad por encima de Z2. Vigilá el control en los bloques activos.';
+    }
+
+    return 'Sesión de umbral. Trabajo principal en Z2 con carga interna coherente.';
+  }
+
+  if (sessionContext?.sessionType === 'rodaje_z1' || sessionContext?.sessionType === 'z1_warmup_cooldown') {
+    const sessionFcMax = sessionContext.sessionFcMax ?? avgHR;
+    if (sessionFcMax > z1Max) {
+      return 'Rodaje por encima de Z1. Cuidá la intensidad para sostener el estímulo aeróbico.';
+    }
+
+    return 'Sesión de rodaje en Z1. Carga interna controlada.';
+  }
+
+  if (avgHR < z1Max) {
     return 'Sesión de recuperación. Baja carga interna, enfocate en mantener la continuidad.';
-  } else if (avgHR < 150) {
+  } else if (avgHR < z2Max) {
     return 'Sesión de base aeróbica. Ideal para desarrollar capacidad cardiovascular.';
-  } else if (avgHR < 170) {
+  } else if (avgHR < z2Max + 20) {
     return 'Sesión de umbral. Buena intensidad para mejorar el límite de rendimiento.';
   } else {
     return 'Sesión de alta intensidad. Asegúrate de que el objetivo era trabajar en VO2Max.';
@@ -146,8 +185,7 @@ function generateSessionVerdict(avgHR: number, avgPace: number): string {
 export function calculateTrainingStress(
   durationMinutes: number,
   avgHR: number,
-  maxHR: number,
-  restingHR?: number
+  maxHR: number
 ): number {
   if (maxHR <= 0 || avgHR <= 0) return 0;
   

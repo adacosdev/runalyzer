@@ -197,6 +197,92 @@ describe('generateFeedback', () => {
       expect(feedback[0]?.category).toBe('cardiac_drift');
     });
   });
+
+  describe('v2 priority and suppression rules', () => {
+    const zoneConfig = {
+      z1MaxHR: 140,
+      z2MaxHR: 165,
+      maxHR: 190,
+      isEstimated: false,
+      calibrationMethod: 'manual' as const,
+      lastCalibrated: Date.now(),
+    };
+
+    it('prioritizes intensity over recovery when both conditions co-trigger', () => {
+      const analysis = createBaseAnalysis({
+        zoneDistribution: {
+          z1Seconds: 600,
+          z2Seconds: 1800,
+          z3Seconds: 600,
+          z1Percent: 20,
+          z2Percent: 60,
+          z3Percent: 20,
+          totalSeconds: 3000,
+          verdict: 'High intensity',
+          isEstimated: false,
+        },
+        lactateClearance: {
+          intervals: [
+            {
+              name: 'Recovery 1',
+              peakHR: 175,
+              endHR: 158,
+              dropBpm: 17,
+              dropPercent: 9.7,
+              quality: 'poor',
+            },
+          ],
+          averageDropPercent: 9.7,
+          overallQuality: 'poor',
+          verdict: 'Recuperación limitada',
+          hasIntervals: true,
+        },
+      });
+
+      const feedback = generateFeedback(analysis, {
+        sessionType: 'interval_z2',
+        zoneConfig,
+        activeFcMax: 172,
+        sessionFcMax: 176,
+        hasRecoverySegments: true,
+      });
+
+      expect(feedback[0]?.id).toBe('intensity-interval-z2-high');
+      expect(feedback.some((insight) => insight.id === 'lactate-poor')).toBe(false);
+      expect(feedback.some((insight) => insight.title.includes('Poco tiempo en zona base'))).toBe(false);
+    });
+
+    it('requires recovery segments to emit recovery feedback', () => {
+      const analysis = createBaseAnalysis({
+        lactateClearance: {
+          intervals: [
+            {
+              name: 'Recovery 1',
+              peakHR: 172,
+              endHR: 158,
+              dropBpm: 14,
+              dropPercent: 8.1,
+              quality: 'poor',
+            },
+          ],
+          averageDropPercent: 8.1,
+          overallQuality: 'poor',
+          verdict: 'Recuperación limitada',
+          hasIntervals: true,
+        },
+      });
+
+      const feedback = generateFeedback(analysis, {
+        sessionType: 'mixed',
+        zoneConfig,
+        activeFcMax: 150,
+        sessionFcMax: 160,
+        hasRecoverySegments: false,
+      });
+
+      expect(feedback.some((insight) => insight.id === 'lactate-poor')).toBe(false);
+    });
+  });
 });
 
 describe('generateSummaryFeedback', () => {

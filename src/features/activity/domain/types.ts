@@ -5,7 +5,20 @@
  * All these types are pure data structures with no dependencies.
  */
 
-import { ActivityStream } from './activity.types';
+export type SessionType = 'interval_z2' | 'rodaje_z1' | 'z1_warmup_cooldown' | 'mixed';
+export type AnalysisReasonCode =
+  | 'ok'
+  | 'pace-missing'
+  | 'pace-invalid-nonpositive'
+  | 'trim-window-empty'
+  | 'trim-window-too-short'
+  | 'missing-main-z2-block'
+  | 'checkpoint-unavailable-outside-window'
+  | 'missing-heart-rate-stream'
+  | 'peak-window-missing'
+  | 'insufficient-data';
+export type ConfidenceMarker = 'exact' | 'fallback_nearest_3s' | 'unavailable';
+export type SourceAuthority = 'local_primary' | 'secondary_reference' | 'local_unavailable';
 
 /**
  * Result of Cardiac Drift analysis
@@ -29,6 +42,22 @@ export interface CardiacDriftResult {
   dataQualityWarning?: string;
   /** Number of valid data points used */
   validDataPoints: number;
+  /** v2 metadata for explainability */
+  reasonCode?: AnalysisReasonCode;
+  /** v2 metadata for source authority */
+  sourceAuthority?: SourceAuthority;
+  /** v2 metadata for trim policy */
+  policyApplied?: 'interval_5_5' | 'rodaje_10_10';
+  /** v2 metadata for window used in drift */
+  analysisWindow?: {
+    startSec: number;
+    endSec: number;
+    durationSec: number;
+  };
+  /** v2 metadata for Intervals.icu decoupling reference */
+  externalReference?: {
+    intervalsIcuDecouplingPercent: number | null;
+  };
 }
 
 export type CardiacDriftVerdict = 
@@ -92,6 +121,8 @@ export interface LactateClearanceResult {
   
   /** Whether the activity has intervals to analyze */
   hasIntervals: boolean;
+  /** v2 metadata for explainability */
+  reasonCode?: AnalysisReasonCode;
 }
 
 export interface RecoveryInterval {
@@ -101,12 +132,24 @@ export interface RecoveryInterval {
   peakHR: number;
   /** HR at the end of recovery window */
   endHR: number;
+  /** HR at +1 minute after the active interval */
+  efficiencyEndHR?: number;
+  /** HR at +2 minutes after the active interval */
+  structuralEndHR?: number;
   /** Absolute HR drop in BPM */
   dropBpm: number;
   /** Percentage drop from peak */
   dropPercent: number;
+  /** Drop percentage at +1 minute checkpoint */
+  efficiencyDropPercent?: number;
+  /** Drop percentage at +2 minute checkpoint */
+  structuralDropPercent?: number;
   /** Quality assessment for this recovery */
   quality: LactateQuality;
+  /** v2 metadata for checkpoint confidence */
+  confidence?: ConfidenceMarker;
+  /** v2 metadata for explainability */
+  reasonCode?: AnalysisReasonCode;
 }
 
 export type LactateQuality = 'excellent' | 'good' | 'poor';
@@ -203,6 +246,13 @@ export interface ActivityAnalysis {
   
   /** Data quality information */
   hrDataQuality: DataQualityReport;
+  /** Additive v2 context for interval-aware semantics */
+  intervalAwareContext?: {
+    thresholdSecPerKm: number;
+    sessionType: SessionType;
+    warmupCooldownHeuristicApplied: boolean;
+    sourceAuthority?: SourceAuthority;
+  };
 }
 
 export type DataAvailability = 'full-streams' | 'summary-only' | 'none';

@@ -8,7 +8,17 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { queryClient } from '../queryClient';
-import { clearHome30dSummaryQueryCache } from '../queryKeys';
+import {
+  clearActivityDetailQueryCache,
+  clearActivityStreamsQueryCache,
+  clearHome30dSummaryQueryCache,
+} from '../queryKeys';
+
+function clearAuthBoundedQueryNamespaces() {
+  clearHome30dSummaryQueryCache(queryClient);
+  clearActivityDetailQueryCache(queryClient);
+  clearActivityStreamsQueryCache(queryClient);
+}
 
 interface AuthState {
   // State
@@ -34,8 +44,8 @@ export const useAuthStore = create<AuthState>()(
       
       setApiKey: (apiKey) => {
         const previousApiKey = get().apiKey;
-        if (previousApiKey && previousApiKey !== apiKey) {
-          clearHome30dSummaryQueryCache(queryClient);
+        if (previousApiKey !== apiKey) {
+          clearAuthBoundedQueryNamespaces();
         }
 
         set({ 
@@ -47,7 +57,7 @@ export const useAuthStore = create<AuthState>()(
       
       clearApiKey: () => {
         if (get().apiKey) {
-          clearHome30dSummaryQueryCache(queryClient);
+          clearAuthBoundedQueryNamespaces();
         }
 
         set({ 

@@ -11,14 +11,22 @@
 import { 
   ActivityAnalysis, 
   ActionableInsight, 
-  InsightCategory,
   CardiacDriftResult,
   ZoneDistribution,
   InternalExternalLoad,
   LactateClearanceResult,
-  DataAvailability 
+  SessionType,
 } from './types';
+import type { ZoneConfig } from '../../setup/domain/zones.types';
 import { roundTo } from './math';
+
+interface FeedbackRuleContext {
+  sessionType: SessionType;
+  zoneConfig: ZoneConfig;
+  activeFcMax: number | null;
+  sessionFcMax: number | null;
+  hasRecoverySegments: boolean;
+}
 
 /**
  * Generate actionable feedback from complete analysis
@@ -26,9 +34,27 @@ import { roundTo } from './math';
  * @param analysis - Complete activity analysis
  * @returns Array of max 3 actionable insights
  */
-export function generateFeedback(analysis: ActivityAnalysis): ActionableInsight[] {
+export function generateFeedback(
+  analysis: ActivityAnalysis,
+  context?: FeedbackRuleContext
+): ActionableInsight[] {
   const insights: ActionableInsight[] = [];
+
+  const intensityInsight = context
+    ? generateIntensityInsight(context)
+    : null;
+  const hasPrimaryIntensityAlert = intensityInsight != null;
+
+  if (intensityInsight) {
+    insights.push(intensityInsight);
+  }
   
+  const suppressZoneBaseInsight = context?.sessionType === 'interval_z2'
+    || (
+      !!context?.hasRecoverySegments
+      && (context.activeFcMax ?? 0) > context.zoneConfig.z1MaxHR
+    );
+
   // 1. Cardiac Drift is the most important metric
   if (analysis.cardiacDrift && analysis.cardiacDrift.verdict !== 'insufficient-data') {
     const driftInsight = generateCardiacDriftInsight(analysis.cardiacDrift);
@@ -38,7 +64,11 @@ export function generateFeedback(analysis: ActivityAnalysis): ActionableInsight[
   }
   
   // 2. Zone distribution
-  if (analysis.zoneDistribution && !analysis.zoneDistribution.isEstimated) {
+  if (
+    analysis.zoneDistribution &&
+    !analysis.zoneDistribution.isEstimated &&
+    !suppressZoneBaseInsight
+  ) {
     const zoneInsight = generateZoneInsight(analysis.zoneDistribution);
     if (zoneInsight) {
       insights.push(zoneInsight);
@@ -54,7 +84,12 @@ export function generateFeedback(analysis: ActivityAnalysis): ActionableInsight[
   }
   
   // 4. Lactate clearance (if intervals exist)
-  if (analysis.lactateClearance && analysis.lactateClearance.hasIntervals) {
+  if (
+    analysis.lactateClearance &&
+    analysis.lactateClearance.hasIntervals &&
+    !hasPrimaryIntensityAlert &&
+    (context?.hasRecoverySegments ?? true)
+  ) {
     const lactateInsight = generateLactateInsight(analysis.lactateClearance);
     if (lactateInsight) {
       insights.push(lactateInsight);
@@ -78,6 +113,61 @@ export function generateFeedback(analysis: ActivityAnalysis): ActionableInsight[
   return insights
     .sort((a, b) => a.priority - b.priority)
     .slice(0, 3);
+}
+
+function generateIntensityInsight(
+  context: FeedbackRuleContext
+): ActionableInsight | null {
+  const { sessionType, zoneConfig, activeFcMax, sessionFcMax } = context;
+
+  if (sessionType === 'interval_z2') {
+    if (activeFcMax == null || activeFcMax <= zoneConfig.z2MaxHR) {
+      return null;
+    }
+
+    return {
+      id: 'intensity-interval-z2-high',
+      priority: 0,
+      category: 'zone_distribution',
+      title: 'Intensidad por encima de Z2',
+      description:
+        `La FC máxima activa fue ${roundTo(activeFcMax)} bpm y superó tu límite de Z2 (${roundTo(zoneConfig.z2MaxHR)} bpm).`,
+      relatedMetric: 'zoneDistribution',
+      recommendation: 'Bajá levemente el ritmo en los bloques activos para sostener el objetivo metabólico.',
+    };
+  }
+
+  if (sessionType === 'rodaje_z1' || sessionType === 'z1_warmup_cooldown') {
+    if (sessionFcMax == null || sessionFcMax <= zoneConfig.z1MaxHR) {
+      return null;
+    }
+
+    return {
+      id: 'intensity-rodaje-z1-high',
+      priority: 0,
+      category: 'zone_distribution',
+      title: 'Rodaje por encima de Z1',
+      description:
+        `La FC máxima de la sesión fue ${roundTo(sessionFcMax)} bpm y superó tu límite de Z1 (${roundTo(zoneConfig.z1MaxHR)} bpm).`,
+      relatedMetric: 'zoneDistribution',
+      recommendation: 'Ajustá el ritmo para mantener el rodaje realmente aeróbico.',
+    };
+  }
+
+  if (sessionFcMax == null || sessionFcMax <= zoneConfig.z2MaxHR) {
+    return null;
+  }
+
+  return {
+    id: 'intensity-mixed-high',
+    priority: 0,
+    category: 'zone_distribution',
+    title: 'Intensidad alta detectada',
+    description:
+      `La FC máxima de la sesión fue ${roundTo(sessionFcMax)} bpm y superó tu límite de Z2 (${roundTo(zoneConfig.z2MaxHR)} bpm).`,
+    relatedMetric: 'zoneDistribution',
+    recommendation: 'Definí mejor la intención del estímulo para evitar mezclar intensidad y recuperación sin control.',
+  };
 }
 
 /**

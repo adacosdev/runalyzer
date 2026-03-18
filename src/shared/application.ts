@@ -11,15 +11,23 @@ import {
   buildRollingWindowBounds,
   createIntervalsClient,
   fetchActivities,
+  fetchActivityWithIntervals,
   fetchActivityStreams,
   fetchRollingWindowActivities,
   validateApiKey,
 } from './api/intervals-client';
+import type { StreamType } from '../features/activity/domain/activity.types';
 import {
   buildHome30dRunningSummary,
   type Home30dSummaryQueryResult,
 } from '../features/activity/domain';
-import { buildHome30dSummaryAuthScope, buildHome30dSummaryQueryKey } from './queryKeys';
+import {
+  buildActivitiesQueryKey,
+  buildActivityDetailQueryKey,
+  buildActivityStreamsQueryKey,
+  buildHome30dSummaryAuthScope,
+  buildHome30dSummaryQueryKey,
+} from './queryKeys';
 
 /**
  * Sync activities use-case
@@ -39,7 +47,7 @@ export function useActivities(limit = 20) {
   const { apiKey } = useAuthStore();
   
   return useQuery({
-    queryKey: ['activities', limit],
+    queryKey: buildActivitiesQueryKey(limit),
     queryFn: async () => {
       if (!apiKey) throw new Error('Not authenticated');
       const client = await createIntervalsClient({ apiKey });
@@ -56,13 +64,32 @@ export function useActivityStreams(activityId: string, types: string[] = ['time'
   const { apiKey } = useAuthStore();
   
   return useQuery({
-    queryKey: ['activity-streams', activityId, types],
+    queryKey: buildActivityStreamsQueryKey(activityId, types),
     queryFn: async () => {
       if (!apiKey) throw new Error('Not authenticated');
       const client = await createIntervalsClient({ apiKey });
-      return fetchActivityStreams(client, activityId, types as any);
+      return fetchActivityStreams(client, activityId, types as StreamType[]);
     },
     enabled: !!apiKey && !!activityId,
+  });
+}
+
+/**
+ * Hook to fetch activity detail with intervals
+ */
+export function useActivityDetail(activityId: string) {
+  const { apiKey } = useAuthStore();
+
+  return useQuery({
+    queryKey: buildActivityDetailQueryKey(activityId),
+    queryFn: async () => {
+      if (!apiKey) throw new Error('Not authenticated');
+      const client = await createIntervalsClient({ apiKey });
+      return fetchActivityWithIntervals(client, activityId);
+    },
+    enabled: !!apiKey && !!activityId,
+    staleTime: 120_000,
+    retry: 1,
   });
 }
 
