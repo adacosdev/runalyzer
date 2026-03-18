@@ -49,6 +49,12 @@ export function generateFeedback(
     insights.push(intensityInsight);
   }
   
+  const suppressZoneBaseInsight = context?.sessionType === 'interval_z2'
+    || (
+      !!context?.hasRecoverySegments
+      && (context.activeFcMax ?? 0) > context.zoneConfig.z1MaxHR
+    );
+
   // 1. Cardiac Drift is the most important metric
   if (analysis.cardiacDrift && analysis.cardiacDrift.verdict !== 'insufficient-data') {
     const driftInsight = generateCardiacDriftInsight(analysis.cardiacDrift);
@@ -61,7 +67,7 @@ export function generateFeedback(
   if (
     analysis.zoneDistribution &&
     !analysis.zoneDistribution.isEstimated &&
-    context?.sessionType !== 'interval_z2'
+    !suppressZoneBaseInsight
   ) {
     const zoneInsight = generateZoneInsight(analysis.zoneDistribution);
     if (zoneInsight) {

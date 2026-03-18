@@ -1,6 +1,7 @@
 import { DomainInterval } from './activity.types';
 import { AnalysisReasonCode, ConfidenceMarker } from './types';
 import { average, roundTo } from './math';
+import { ACTIVE_PACE_THRESHOLD_SECONDS_PER_KM } from './intervalClassification';
 
 const CHECKPOINT_TOLERANCE_SECONDS = 3;
 const ACTIVE_PEAK_WINDOW_SECONDS = 60;
@@ -241,7 +242,15 @@ export function analyzeLactateProtocol(input: LactateProtocolInput): LactateProt
     }
 
     const nextInterval = intervals[index + 1];
-    const recoveryInterval = nextInterval?.isRecovery ? nextInterval : undefined;
+    const recoveryInterval = nextInterval && (
+      nextInterval.isRecovery
+      || (
+        nextInterval.averagePace != null
+        && nextInterval.averagePace > ACTIVE_PACE_THRESHOLD_SECONDS_PER_KM
+      )
+    )
+      ? nextInterval
+      : undefined;
     intervalResults.push(buildIntervalResult(activeInterval, timeData, heartRateData, recoveryInterval));
   }
 
