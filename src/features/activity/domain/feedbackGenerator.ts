@@ -61,7 +61,7 @@ export function generateFeedback(
   if (
     analysis.zoneDistribution &&
     !analysis.zoneDistribution.isEstimated &&
-    !(context?.sessionType === 'interval_z2' && analysis.zoneDistribution.z1Percent < 60)
+    context?.sessionType !== 'interval_z2'
   ) {
     const zoneInsight = generateZoneInsight(analysis.zoneDistribution);
     if (zoneInsight) {

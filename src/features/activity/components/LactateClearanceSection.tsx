@@ -60,8 +60,16 @@ export function LactateClearanceSection({ clearance }: LactateClearanceSectionPr
               </div>
               <div className="flex gap-4 text-xs text-gray-400">
                 <span>Pico: <span className="text-gray-200">{interval.peakHR} bpm</span></span>
-                <span>Final: <span className="text-gray-200">{interval.endHR} bpm</span></span>
-                <span>Caída: <span className="text-gray-200">{interval.dropBpm} bpm ({interval.dropPercent.toFixed(1)}%)</span></span>
+                <span>+1m: <span className="text-gray-200">{interval.efficiencyEndHR ?? interval.endHR} bpm</span></span>
+                <span>+2m: <span className="text-gray-200">{interval.structuralEndHR ?? '-'} bpm</span></span>
+                <span>
+                  Caída: <span className="text-gray-200">{interval.dropBpm} bpm ({interval.dropPercent.toFixed(1)}%)</span>
+                </span>
+                {interval.structuralDropPercent != null && (
+                  <span>
+                    Caída +2m: <span className="text-gray-200">{interval.structuralDropPercent.toFixed(1)}%</span>
+                  </span>
+                )}
               </div>
             </div>
           ))}

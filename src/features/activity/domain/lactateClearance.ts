@@ -60,8 +60,12 @@ export function analyzeLactateClearance(
           name: result.intervalName,
           peakHR: roundTo(peakHR),
           endHR: roundTo(endHR),
+          efficiencyEndHR: roundTo(endHR),
+          structuralEndHR: result.structuralEndHr != null ? roundTo(result.structuralEndHr) : undefined,
           dropBpm: roundTo(dropBpm),
           dropPercent: roundTo(dropPercent),
+          efficiencyDropPercent: result.efficiencyDropPct != null ? roundTo(result.efficiencyDropPct) : undefined,
+          structuralDropPercent: result.structuralDropPct != null ? roundTo(result.structuralDropPct) : undefined,
           quality: classifyRecoveryQuality(dropPercent),
           confidence: result.confidence.plus1m,
           reasonCode: result.reasonCode,
@@ -69,6 +73,13 @@ export function analyzeLactateClearance(
       });
 
     if (mappedIntervals.length === 0) {
+      if (zoneConfig) {
+        const fallbackSummaryResult = analyzeLactateClearance(intervals, zoneConfig);
+        if (fallbackSummaryResult.hasIntervals) {
+          return fallbackSummaryResult;
+        }
+      }
+
       const firstReason = protocolResult.intervals[0]?.reasonCode;
       const reasonCode = firstReason && firstReason !== 'ok' ? firstReason : 'insufficient-data';
 
@@ -182,13 +193,13 @@ function isValidActiveInterval(
  * Classify recovery quality based on HR drop percentage
  * 
  * Thresholds implemented in this analysis:
- * - >=25% drop: Excellent (efficient clearing)
- * - >=15% and <25% drop: Good
- * - <15% drop: Poor (lactate accumulating)
+ * - >=15% drop: Excellent (efficient clearing)
+ * - >=12% and <15% drop: Good
+ * - <12% drop: Poor (lactate accumulating)
  */
 function classifyRecoveryQuality(dropPercent: number): LactateQuality {
-  if (dropPercent >= 25) return 'excellent';
-  if (dropPercent >= 15) return 'good';
+  if (dropPercent >= 15) return 'excellent';
+  if (dropPercent >= 12) return 'good';
   return 'poor';
 }
 

@@ -59,6 +59,7 @@ describe('analyzeLactateProtocol', () => {
         plus1m: 'exact',
         plus2m: 'exact',
       },
+      peakHr: 175,
       efficiencyEndHr: 154,
       structuralEndHr: 146,
     });

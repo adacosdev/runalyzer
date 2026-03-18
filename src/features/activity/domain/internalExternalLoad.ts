@@ -12,6 +12,7 @@
 import { InternalExternalLoad, LoadInterval } from './types';
 import { average, roundTo } from './math';
 import { ZoneConfig } from '../../setup/domain/zones.types';
+import { ACTIVE_PACE_THRESHOLD_SECONDS_PER_KM } from './intervalClassification';
 
 /**
  * Analyze internal vs external load from interval data
@@ -39,6 +40,7 @@ export function analyzeInternalExternalLoad(
     // Skip intervals without required data
     if (!interval.averagePace || !interval.averageHeartrate) continue;
     if (interval.duration < 30) continue; // Skip very short intervals
+    if (interval.averagePace > ACTIVE_PACE_THRESHOLD_SECONDS_PER_KM) continue;
     
     const avgPace = interval.averagePace;
     const avgHR = interval.averageHeartrate;
@@ -69,7 +71,9 @@ export function analyzeInternalExternalLoad(
   }
   
   // Calculate session averages
-  const allPaces = loadIntervals.map(i => i.avgPaceMps).filter(p => p > 0);
+  const allPaces = loadIntervals
+    .map((interval) => interval.avgPaceMps)
+    .filter((pace) => pace > 0 && pace <= ACTIVE_PACE_THRESHOLD_SECONDS_PER_KM);
   const allHRs = loadIntervals.map(i => i.avgHR).filter(h => h > 0);
   
   const sessionAvgPace = average(allPaces);

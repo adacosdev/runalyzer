@@ -132,10 +132,18 @@ export interface RecoveryInterval {
   peakHR: number;
   /** HR at the end of recovery window */
   endHR: number;
+  /** HR at +1 minute after the active interval */
+  efficiencyEndHR?: number;
+  /** HR at +2 minutes after the active interval */
+  structuralEndHR?: number;
   /** Absolute HR drop in BPM */
   dropBpm: number;
   /** Percentage drop from peak */
   dropPercent: number;
+  /** Drop percentage at +1 minute checkpoint */
+  efficiencyDropPercent?: number;
+  /** Drop percentage at +2 minute checkpoint */
+  structuralDropPercent?: number;
   /** Quality assessment for this recovery */
   quality: LactateQuality;
   /** v2 metadata for checkpoint confidence */

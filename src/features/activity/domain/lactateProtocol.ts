@@ -1,6 +1,6 @@
 import { DomainInterval } from './activity.types';
 import { AnalysisReasonCode, ConfidenceMarker } from './types';
-import { roundTo } from './math';
+import { average, roundTo } from './math';
 
 const CHECKPOINT_TOLERANCE_SECONDS = 3;
 const ACTIVE_PEAK_WINDOW_SECONDS = 60;
@@ -155,7 +155,7 @@ function buildPeakHeartRate(
     return { confidence: 'unavailable' };
   }
 
-  const peakHeartRate = Math.max(...peakSamples);
+  const peakHeartRate = average(peakSamples);
 
   return {
     peakHr: roundTo(peakHeartRate),

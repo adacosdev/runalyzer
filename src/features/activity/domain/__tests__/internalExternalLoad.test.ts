@@ -57,6 +57,19 @@ describe('analyzeInternalExternalLoad', () => {
       expect(result.intervals.length).toBe(1);
       expect(result.intervals[0].name).toBe('Normal');
     });
+
+    it('should ignore recovery pace segments slower than 10:00/km', () => {
+      const intervals = [
+        { name: 'Activo', averagePace: 300, averageHeartrate: 150, duration: 600, type: 'steady' },
+        { name: 'Recuperacion', averagePace: 620, averageHeartrate: 120, duration: 600, type: 'recovery' },
+      ];
+
+      const result = analyzeInternalExternalLoad(intervals);
+
+      expect(result.intervals).toHaveLength(1);
+      expect(result.intervals[0].name).toBe('Activo');
+      expect(result.sessionAvgPaceMinKm).toBe(300);
+    });
   });
 
   describe('RPE integration', () => {
@@ -130,7 +143,13 @@ describe('analyzeInternalExternalLoad', () => {
 
   describe('edge cases', () => {
     it('should handle empty intervals', () => {
-      const intervals: any[] = [];
+      const intervals: Array<{
+        name: string;
+        averagePace: number | null;
+        averageHeartrate: number | null;
+        duration: number;
+        type: string;
+      }> = [];
       
       const result = analyzeInternalExternalLoad(intervals);
       
