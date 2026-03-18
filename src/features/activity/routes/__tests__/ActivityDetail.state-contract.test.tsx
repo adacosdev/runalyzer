@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 import '@testing-library/jest-dom/vitest';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { ActivityDetailPage } from '../ActivityDetail';
 
 const mocks = vi.hoisted(() => ({
@@ -61,6 +61,10 @@ function sampleActivity(overrides: Record<string, unknown> = {}) {
 }
 
 describe('ActivityDetail route state contract', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.useActivityDetailMock.mockReturnValue(queryState({ isLoading: true }));
@@ -86,8 +90,41 @@ describe('ActivityDetail route state contract', () => {
 
     render(<ActivityDetailPage />);
 
-    expect(screen.getByText('Error al cargar la actividad')).toBeInTheDocument();
+    expect(screen.getByText('Actividad no disponible')).toBeInTheDocument();
+    expect(screen.getByText('detail transport failed')).toBeInTheDocument();
     expect(screen.queryByText('Analizando entrenamiento...')).not.toBeInTheDocument();
+  });
+
+  it('renders degraded ready state when only streams query fails', () => {
+    mocks.useActivityDetailMock.mockReturnValue(
+      queryState({ data: sampleActivity() })
+    );
+    mocks.useActivityStreamsMock.mockReturnValue(
+      queryState({ isError: true, error: new Error('Timeout al cargar streams') })
+    );
+
+    render(<ActivityDetailPage />);
+
+    expect(screen.getByText('Streams no disponibles')).toBeInTheDocument();
+    expect(screen.getByText('Timeout al cargar streams')).toBeInTheDocument();
+    expect(screen.getAllByText('DATOS DE LA ACTIVIDAD').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Actividad no disponible')).not.toBeInTheDocument();
+  });
+
+  it('shows activity error and hides streams banner when both queries fail', () => {
+    mocks.useActivityDetailMock.mockReturnValue(
+      queryState({ isError: true, error: new Error('Activity gone') })
+    );
+    mocks.useActivityStreamsMock.mockReturnValue(
+      queryState({ isError: true, error: new Error('Streams also gone') })
+    );
+
+    render(<ActivityDetailPage />);
+
+    expect(screen.getByText('Actividad no disponible')).toBeInTheDocument();
+    expect(screen.getByText('Activity gone')).toBeInTheDocument();
+    expect(screen.queryByText('Streams no disponibles')).not.toBeInTheDocument();
+    expect(screen.queryByText('DATOS DE LA ACTIVIDAD')).not.toBeInTheDocument();
   });
 
   it('renders loading when queries are pending with no errors', () => {
