@@ -158,6 +158,14 @@ export function analyzeActivity(
   const zoneDistribution = hrData.length > 0
     ? analyzeZoneDistribution(hrData, effectiveZoneConfig, sessionType)
     : null;
+  const isFullZ1Session =
+    sessionType === 'rodaje_z1'
+    || sessionType === 'z1_warmup_cooldown'
+    || (
+      zoneDistribution != null
+      && zoneDistribution.z2Percent === 0
+      && zoneDistribution.z3Percent === 0
+    );
 
   const intervals = activity?.icuIntervals ?? [];
   const internalExternalLoad = intervals.length > 0
@@ -179,7 +187,7 @@ export function analyzeActivity(
       )
     : null;
 
-  const lactateClearance = intervals.length > 0
+  const lactateClearance = intervals.length > 0 && !isFullZ1Session
     ? analyzeLactateClearance(
         intervals.map((i) => ({
           name: i.name,

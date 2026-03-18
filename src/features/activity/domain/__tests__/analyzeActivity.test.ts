@@ -277,6 +277,7 @@ describe('analyzeActivity', () => {
     expect(analysis.intervalAwareContext?.sessionType).toBe('rodaje_z1');
     expect(analysis.intervalAwareContext?.warmupCooldownHeuristicApplied).toBe(false);
     expect(analysis.cardiacDrift?.policyApplied).toBe('rodaje_10_10');
+    expect(analysis.lactateClearance).toBeNull();
   });
 
   it('fixture C: reports sparse +2m checkpoint as unavailable without fabricating lactate drops', () => {
