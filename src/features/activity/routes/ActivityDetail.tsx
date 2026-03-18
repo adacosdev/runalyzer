@@ -32,7 +32,8 @@ function resolveRouteViewState<TActivity, TStreams>(
   activityQuery: QueryLike<TActivity>,
   streamsQuery: QueryLike<TStreams>
 ): RouteViewState {
-  if (activityQuery.isError || streamsQuery.isError) {
+  // Only activity errors are fatal — streams failure is a degraded-ready state, not a routing error
+  if (activityQuery.isError) {
     return 'error';
   }
 
@@ -82,13 +83,17 @@ export function ActivityDetailPage() {
   const viewState = resolveRouteViewState(activityQuery, streamsQuery);
 
   if (viewState === 'error') {
-    const message = activityQuery.error?.message ?? streamsQuery.error?.message ?? 'No se pudo cargar la actividad';
+    const rawErrorMessage = activityQuery.error?.message ?? '';
+    const detailMessage =
+      rawErrorMessage.trim() !== ''
+        ? rawErrorMessage
+        : 'Se ha producido un error al cargar la actividad. Inténtalo de nuevo más tarde.';
 
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
         <div className="bg-bg-card border border-red-800 p-8 rounded-2xl text-center max-w-md">
-          <p className="text-red-400">Error al cargar la actividad</p>
-          <p className="text-gray-400 mt-2 text-sm">{message}</p>
+          <p className="text-red-400">Actividad no disponible</p>
+          <p className="text-gray-400 mt-2 text-sm">{detailMessage}</p>
           <button
             onClick={() => navigate({ to: '/' })}
             className="mt-4 px-4 py-2 bg-orange-500 text-black rounded-lg hover:bg-orange-400"
@@ -143,6 +148,16 @@ export function ActivityDetailPage() {
 
   return (
     <div className="min-h-screen bg-bg-primary">
+      {/* Streams degraded banner */}
+      {streamsQuery.isError && (
+        <div className="bg-yellow-900/40 border-b border-yellow-700 px-4 py-3">
+          <p className="text-yellow-300 text-sm font-medium">Streams no disponibles</p>
+          {streamsQuery.error?.message && (
+            <p className="text-yellow-400/70 text-xs mt-1">{streamsQuery.error.message}</p>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
