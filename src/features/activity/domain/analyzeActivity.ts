@@ -30,8 +30,8 @@ function isValidHeartRateSample(heartRate: number): boolean {
   return heartRate >= 30 && heartRate <= 220;
 }
 
-function hasExplicitZ1Semantics(activity: DomainActivity | null | undefined): boolean {
-  const intervals = activity?.icuIntervals ?? [];
+function hasExplicitZ1Semantics(activity: DomainActivity): boolean {
+  const intervals = activity.icuIntervals ?? [];
   if (intervals.length === 0) {
     return false;
   }
@@ -40,7 +40,7 @@ function hasExplicitZ1Semantics(activity: DomainActivity | null | undefined): bo
     return false;
   }
 
-  const [z1Seconds = 0, z2Seconds = 0, z3Seconds = 0] = activity?.icuHrZoneTimes ?? [];
+  const [z1Seconds = 0, z2Seconds = 0, z3Seconds = 0] = activity.icuHrZoneTimes ?? [];
   if (z1Seconds <= 0) {
     return false;
   }
@@ -49,10 +49,10 @@ function hasExplicitZ1Semantics(activity: DomainActivity | null | undefined): bo
 }
 
 function hasZ2IntervalSession(
-  activity: DomainActivity | null | undefined,
+  activity: DomainActivity,
   zoneConfig: ZoneConfig
 ): boolean {
-  const intervals = activity?.icuIntervals ?? [];
+  const intervals = activity.icuIntervals ?? [];
 
   if (intervals.some((interval) => HIGH_INTENSITY_INTERVAL_TYPES.has(interval.type) && !interval.isRecovery)) {
     return true;
@@ -116,7 +116,7 @@ function getStreamData(streams: ActivityStream[], type: ActivityStream['type']):
 }
 
 export function analyzeActivity(
-  activity: DomainActivity | null | undefined,
+  activity: DomainActivity,
   streams: ActivityStream[],
   zoneConfig?: ZoneConfig | null
 ): ActivityAnalysis {
@@ -134,7 +134,7 @@ export function analyzeActivity(
   const classifiedSegments = buildClassifiedSegments(paceClassifications);
   const explicitZ1Semantics = hasExplicitZ1Semantics(activity);
   const semantics = detectSessionSemantics({
-    activityDurationSec: activity?.duration ?? 0,
+    activityDurationSec: activity.duration ?? 0,
     explicitZ1Semantics,
   });
   const sessionType = hasZ2IntervalSession(activity, effectiveZoneConfig) ? 'interval_z2' : semantics.sessionType;
@@ -152,7 +152,7 @@ export function analyzeActivity(
         timeData,
         sessionType,
         classifiedSegments,
-        externalDecouplingPercent: activity?.decoupling ?? null,
+        externalDecouplingPercent: activity.decoupling ?? null,
       })
     : null;
   const zoneDistribution = hrData.length > 0
@@ -167,7 +167,7 @@ export function analyzeActivity(
       && zoneDistribution.z3Percent === 0
     );
 
-  const intervals = activity?.icuIntervals ?? [];
+  const intervals = activity.icuIntervals ?? [];
   const internalExternalLoad = intervals.length > 0
     ? analyzeInternalExternalLoad(
         intervals.map((i) => ({
@@ -206,7 +206,7 @@ export function analyzeActivity(
     : null;
 
   const base: ActivityAnalysis = {
-    activityId: activity?.id ?? 'unknown-activity',
+    activityId: activity.id,
     analyzedAt: Date.now(),
     dataAvailability: hrData.length > 0 ? 'full-streams' : 'summary-only',
     cardiacDrift,
