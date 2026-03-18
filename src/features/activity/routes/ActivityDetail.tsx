@@ -83,13 +83,17 @@ export function ActivityDetailPage() {
   const viewState = resolveRouteViewState(activityQuery, streamsQuery);
 
   if (viewState === 'error') {
+    const rawErrorMessage = activityQuery.error?.message ?? '';
+    const detailMessage =
+      rawErrorMessage.trim() !== ''
+        ? rawErrorMessage
+        : 'Se ha producido un error al cargar la actividad. Inténtalo de nuevo más tarde.';
+
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
         <div className="bg-bg-card border border-red-800 p-8 rounded-2xl text-center max-w-md">
           <p className="text-red-400">Actividad no disponible</p>
-          {activityQuery.error?.message && (
-            <p className="text-gray-400 mt-2 text-sm">{activityQuery.error.message}</p>
-          )}
+          <p className="text-gray-400 mt-2 text-sm">{detailMessage}</p>
           <button
             onClick={() => navigate({ to: '/' })}
             className="mt-4 px-4 py-2 bg-orange-500 text-black rounded-lg hover:bg-orange-400"
