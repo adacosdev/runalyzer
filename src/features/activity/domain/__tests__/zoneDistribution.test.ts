@@ -124,6 +124,21 @@ describe('analyzeZoneDistribution', () => {
       
       expect(result.verdict).toContain('estimadas');
     });
+
+    it('should suppress low Z1 warning for interval_z2 sessions', () => {
+      // 20% Z1, 60% Z2, 20% Z3
+      const hrData = [
+        ...Array(60).fill(130),
+        ...Array(180).fill(150),
+        ...Array(60).fill(175),
+      ];
+
+      const config = createZoneConfig();
+      const result = analyzeZoneDistribution(hrData, config, 'interval_z2');
+
+      expect(result.verdict).not.toContain('Muy poco tiempo en Z1');
+      expect(result.verdict).toContain('Exceso de tiempo en Z2');
+    });
   });
 
   describe('edge cases', () => {

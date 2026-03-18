@@ -155,7 +155,9 @@ export function analyzeActivity(
         externalDecouplingPercent: activity?.decoupling ?? null,
       })
     : null;
-  const zoneDistribution = hrData.length > 0 ? analyzeZoneDistribution(hrData, effectiveZoneConfig) : null;
+  const zoneDistribution = hrData.length > 0
+    ? analyzeZoneDistribution(hrData, effectiveZoneConfig, sessionType)
+    : null;
 
   const intervals = activity?.icuIntervals ?? [];
   const internalExternalLoad = intervals.length > 0
