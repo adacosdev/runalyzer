@@ -1,53 +1,67 @@
 /**
  * Activity Detail Page - Runalyzer
- * 
+ *
  * Shows complete analysis of a single activity.
- * Dark theme with orange accents.
  */
 
-import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
-import { useActivityStreams } from '../../../shared/application';
+import { useActivityDetail, useActivityStreams } from '../../../shared/application';
 import { useZonesStore } from '../../../shared/store/zones.store';
 import { analyzeActivity } from '../domain';
-import { DomainActivity } from '../domain/activity.types';
 import { ActivityAnalysis } from '../domain/types';
-import { 
-  CardiacDriftChart, 
-  ZoneDistributionBar, 
+import {
+  CardiacDriftChart,
+  ZoneDistributionBar,
   ActionableFeedbackList,
   ActivityCharts,
+  InternalExternalLoadSection,
+  LactateClearanceSection,
 } from '../components';
+
+type RouteViewState = 'error' | 'loading' | 'not-found' | 'ready';
+
+type QueryLike<T> = {
+  data?: T;
+  error: Error | null;
+  isError: boolean;
+  isLoading: boolean;
+  isPending?: boolean;
+};
+
+function resolveRouteViewState<TActivity, TStreams>(
+  activityQuery: QueryLike<TActivity>,
+  streamsQuery: QueryLike<TStreams>
+): RouteViewState {
+  if (activityQuery.isError || streamsQuery.isError) {
+    return 'error';
+  }
+
+  if (
+    activityQuery.isLoading ||
+    streamsQuery.isLoading ||
+    activityQuery.isPending ||
+    streamsQuery.isPending
+  ) {
+    return 'loading';
+  }
+
+  if (!activityQuery.data) {
+    return 'not-found';
+  }
+
+  return 'ready';
+}
 
 export function ActivityDetailPage() {
   const { id } = useParams({ from: '/activity/$id' });
   const navigate = useNavigate();
   const zoneConfig = useZonesStore((state) => state.zoneConfig);
-  
-  const [analysis, setAnalysis] = useState<ActivityAnalysis | null>(null);
-  const [activity] = useState<DomainActivity | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
 
-  const { data: streams, isLoading: loadingStreams, error } = useActivityStreams(
+  const activityQuery = useActivityDetail(id || '');
+  const streamsQuery = useActivityStreams(
     id || '',
     ['time', 'heartrate', 'velocity_smooth', 'distance', 'altitude']
   );
-
-  useEffect(() => {
-    if (!id || !streams) return;
-    
-    setAnalyzing(true);
-    
-    try {
-      // Analyze activity with streams
-      const result = analyzeActivity(activity, streams, zoneConfig);
-      setAnalysis(result);
-    } catch (err) {
-      console.error('Analysis failed:', err);
-    } finally {
-      setAnalyzing(false);
-    }
-  }, [id, streams, activity, zoneConfig]);
 
   if (!id) {
     return (
@@ -65,6 +79,68 @@ export function ActivityDetailPage() {
     );
   }
 
+  const viewState = resolveRouteViewState(activityQuery, streamsQuery);
+
+  if (viewState === 'error') {
+    const message = activityQuery.error?.message ?? streamsQuery.error?.message ?? 'No se pudo cargar la actividad';
+
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <div className="bg-bg-card border border-red-800 p-8 rounded-2xl text-center max-w-md">
+          <p className="text-red-400">Error al cargar la actividad</p>
+          <p className="text-gray-400 mt-2 text-sm">{message}</p>
+          <button
+            onClick={() => navigate({ to: '/' })}
+            className="mt-4 px-4 py-2 bg-orange-500 text-black rounded-lg hover:bg-orange-400"
+          >
+            Volver
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (viewState === 'loading') {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <div className="bg-bg-card border border-border p-8 rounded-2xl text-center">
+          <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full mx-auto mb-2" />
+          <p className="text-orange-500">Analizando entrenamiento...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (viewState === 'not-found') {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <div className="bg-bg-card border border-border p-8 rounded-2xl text-center">
+          <p className="text-orange-500">Actividad no encontrada</p>
+          <button
+            onClick={() => navigate({ to: '/' })}
+            className="mt-4 px-4 py-2 bg-orange-500 text-black rounded-lg hover:bg-orange-400"
+          >
+            Volver
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const activity = activityQuery.data as NonNullable<typeof activityQuery.data>;
+  const streams = streamsQuery.data ?? [];
+  const hasIntervals = activity.icuIntervals.length > 0;
+  const hasStreams = streams.length > 0;
+
+  let analysis: ActivityAnalysis | null = null;
+  let analysisError: string | null = null;
+
+  try {
+    analysis = analyzeActivity(activity, streams, zoneConfig);
+  } catch (err) {
+    analysisError = err instanceof Error ? err.message : 'No se pudo analizar la actividad';
+  }
+
   return (
     <div className="min-h-screen bg-bg-primary">
       {/* Header */}
@@ -80,7 +156,7 @@ export function ActivityDetailPage() {
           </button>
           <div className="flex-1">
             <h1 className="font-semibold text-orange-500 text-lg truncate">
-              Actividad {id}
+              {activity.name || `Actividad ${id}`}
             </h1>
           </div>
         </div>
@@ -88,17 +164,9 @@ export function ActivityDetailPage() {
 
       {/* Content */}
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Loading States */}
-        {(analyzing || loadingStreams) && (
-          <div className="bg-bg-card border border-border p-4 text-center">
-            <div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full mx-auto mb-2" />
-            <p className="text-orange-500">Analizando entrenamiento...</p>
-          </div>
-        )}
-
-        {error && (
+        {analysisError && (
           <div className="bg-bg-card border border-red-800 p-4 text-red-400">
-            {error.message}
+            {analysisError}
           </div>
         )}
 
@@ -106,22 +174,31 @@ export function ActivityDetailPage() {
         <section className="bg-bg-card border border-border p-4">
           <h2 className="text-orange-500 text-sm mb-4">DATOS DE LA ACTIVIDAD</h2>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <StatItem label="ID" value={id} />
-            <StatItem label="Streams" value={streams ? 'Cargados' : 'Sin datos'} />
+            <StatItem label="ID" value={activity.id} />
+            <StatItem label="Streams" value={hasStreams ? 'Cargados' : 'Sin datos'} />
+            <StatItem label="Intervalos" value={hasIntervals ? 'Disponibles' : 'No disponibles'} />
+            <StatItem label="Distancia" value={`${(activity.distance / 1000).toFixed(2)} km`} />
           </div>
         </section>
 
         {/* Charts - Heart Rate & Pace */}
         <section>
           <h2 className="text-gray-400 text-sm mb-4">GRÁFICOS</h2>
-          {streams ? (
+          {hasStreams ? (
             <ActivityCharts streams={streams} />
           ) : (
             <div className="bg-bg-card border border-border p-8 text-center text-gray-500">
-              Sin datos para graficar
+              No hay streams disponibles para esta actividad
             </div>
           )}
         </section>
+
+        {!hasIntervals && (
+          <section className="bg-bg-card border border-border p-4 text-gray-300">
+            <h2 className="text-orange-500 text-sm mb-2">ANÁLISIS POR INTERVALOS</h2>
+            <p className="text-sm">Esta actividad no tiene intervalos estructurados, por lo que este análisis no está disponible.</p>
+          </section>
+        )}
 
         {/* Cardiac Drift */}
         {analysis?.cardiacDrift && (
@@ -136,6 +213,22 @@ export function ActivityDetailPage() {
           <section className="bg-bg-card border border-border p-4">
             <h2 className="text-orange-500 text-sm mb-4">DISTRIBUCIÓN DE ZONAS</h2>
             <ZoneDistributionBar distribution={analysis.zoneDistribution} />
+          </section>
+        )}
+
+        {/* Internal vs External Load */}
+        {analysis?.internalExternalLoad && (
+          <section className="bg-bg-card border border-border p-4">
+            <h2 className="text-orange-500 text-sm mb-4">CARGA INTERNA VS EXTERNA</h2>
+            <InternalExternalLoadSection load={analysis.internalExternalLoad} />
+          </section>
+        )}
+
+        {/* Lactate Clearance */}
+        {analysis?.lactateClearance && (
+          <section className="bg-bg-card border border-border p-4">
+            <h2 className="text-orange-500 text-sm mb-4">ELIMINACIÓN DE LACTATO</h2>
+            <LactateClearanceSection clearance={analysis.lactateClearance} />
           </section>
         )}
 

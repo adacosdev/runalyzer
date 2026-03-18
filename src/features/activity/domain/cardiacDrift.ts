@@ -11,7 +11,7 @@
  * compares average HR, and calculates the drift percentage.
  */
 
-import { CardiacDriftResult, CardiacDriftVerdict } from './types';
+import { CardiacDriftResult, CardiacDriftVerdict, SessionType } from './types';
 import { 
   average, 
   filterInvalidHR, 
@@ -19,6 +19,8 @@ import {
   calculateDrift,
   roundTo 
 } from './math';
+import { ClassifiedSegment } from './intervalClassification';
+import { selectDriftWindow } from './driftWindowing';
 
 /**
  * Analyze cardiac drift from heart rate stream data
@@ -38,7 +40,7 @@ export function analyzeCardiacDrift(
   } = config || {};
   
   // Step 1: Filter invalid HR data
-  const { filtered, validCount, totalCount, validPercent } = filterInvalidHR(heartRateData);
+  const { filtered, validCount, validPercent } = filterInvalidHR(heartRateData);
   
   // Check for insufficient data
   if (validPercent < minValidPercent || filtered.length < 120) {
@@ -109,6 +111,141 @@ export interface CardiacDriftConfig {
   warningThreshold?: number;
   /** Minimum percentage of valid HR data required (default: 80%) */
   minValidPercent?: number;
+}
+
+export interface CardiacDriftV2Input {
+  heartRateData: number[];
+  timeData: number[];
+  sessionType: SessionType;
+  classifiedSegments: ClassifiedSegment[];
+  externalDecouplingPercent?: number | null;
+  driftThreshold?: number;
+  warningThreshold?: number;
+}
+
+const MIN_VALID_DRIFT_WINDOW_SAMPLES = 20;
+
+function isValidHeartRate(hr: number): boolean {
+  return hr >= 30 && hr <= 220;
+}
+
+function buildWindowedHeartRateData(
+  heartRateData: number[],
+  timeData: number[],
+  startSec: number,
+  endSec: number
+): number[] {
+  const sampleCount = Math.min(heartRateData.length, timeData.length);
+  const windowedSamples: number[] = [];
+
+  for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
+    const timestampSec = timeData[sampleIndex];
+    if (timestampSec < startSec || timestampSec > endSec) {
+      continue;
+    }
+
+    const heartRate = heartRateData[sampleIndex];
+    if (!isValidHeartRate(heartRate)) {
+      continue;
+    }
+
+    windowedSamples.push(heartRate);
+  }
+
+  return windowedSamples;
+}
+
+export function analyzeCardiacDriftV2(input: CardiacDriftV2Input): CardiacDriftResult {
+  const {
+    heartRateData,
+    timeData,
+    sessionType,
+    classifiedSegments,
+    externalDecouplingPercent,
+    driftThreshold = 4,
+    warningThreshold = 8,
+  } = input;
+
+  const windowSelection = selectDriftWindow({
+    sessionType,
+    timeData,
+    classifiedSegments,
+  });
+
+  if (!windowSelection.window) {
+    return {
+      verdict: 'insufficient-data',
+      driftPercent: 0,
+      firstHalfAvgHR: 0,
+      secondHalfAvgHR: 0,
+      message: 'No hay ventana valida para analizar el drift cardíaco.',
+      validDataPoints: 0,
+      reasonCode: windowSelection.reasonCode,
+      sourceAuthority: 'local_unavailable',
+      policyApplied: windowSelection.trimPolicy.policyApplied,
+      externalReference: {
+        intervalsIcuDecouplingPercent: externalDecouplingPercent ?? null,
+      },
+    };
+  }
+
+  const { startSec, endSec } = windowSelection.window;
+  const windowedHeartRateData = buildWindowedHeartRateData(heartRateData, timeData, startSec, endSec);
+  if (windowedHeartRateData.length < MIN_VALID_DRIFT_WINDOW_SAMPLES) {
+    return {
+      verdict: 'insufficient-data',
+      driftPercent: 0,
+      firstHalfAvgHR: 0,
+      secondHalfAvgHR: 0,
+      message: 'No hay suficientes datos de frecuencia cardíaca en la ventana de análisis.',
+      validDataPoints: windowedHeartRateData.length,
+      reasonCode: 'trim-window-too-short',
+      sourceAuthority: 'local_unavailable',
+      policyApplied: windowSelection.trimPolicy.policyApplied,
+      externalReference: {
+        intervalsIcuDecouplingPercent: externalDecouplingPercent ?? null,
+      },
+    };
+  }
+
+  const [firstHalf, secondHalf] = splitInHalf(windowedHeartRateData);
+  const firstHalfAvgHR = average(firstHalf);
+  const secondHalfAvgHR = average(secondHalf);
+  const driftPercent = calculateDrift(firstHalf, secondHalf);
+
+  let verdict: CardiacDriftVerdict = 'ok';
+  if (driftPercent >= warningThreshold) {
+    verdict = 'bad';
+  } else if (driftPercent >= driftThreshold) {
+    verdict = 'warning';
+  }
+
+  let message = 'Tu drift cardíaco se mantuvo en rango.';
+  if (verdict === 'warning') {
+    message = `Tu frecuencia cardíaca subió un ${roundTo(driftPercent)}% en la ventana analizada.`;
+  } else if (verdict === 'bad') {
+    message = `Tu frecuencia cardíaca subió un ${roundTo(driftPercent)}% en la ventana analizada. El esfuerzo fue exigente.`;
+  }
+
+  return {
+    verdict,
+    driftPercent: roundTo(driftPercent),
+    firstHalfAvgHR: roundTo(firstHalfAvgHR),
+    secondHalfAvgHR: roundTo(secondHalfAvgHR),
+    message,
+    validDataPoints: windowedHeartRateData.length,
+    reasonCode: 'ok',
+    sourceAuthority: 'local_primary',
+    policyApplied: windowSelection.trimPolicy.policyApplied,
+    analysisWindow: {
+      startSec,
+      endSec,
+      durationSec: endSec - startSec,
+    },
+    externalReference: {
+      intervalsIcuDecouplingPercent: externalDecouplingPercent ?? null,
+    },
+  };
 }
 
 /**

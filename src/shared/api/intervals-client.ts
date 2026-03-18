@@ -129,8 +129,8 @@ export async function fetchActivityWithIntervals(
   client: any,
   activityId: string
 ): Promise<DomainActivity> {
-  const activity = await client.activities.getActivity(activityId);
-  
+  const activity = await client.activities.getActivity(activityId, { intervals: true });
+
   return mapRawActivityToDomain(activity);
 }
 
@@ -206,7 +206,7 @@ function mapRawIntervalToDomain(raw: any): DomainInterval {
     averagePace: raw.average_speed ? 1000 / raw.average_speed : null,
     maxPace: raw.max_speed ? 1000 / raw.max_speed : null,
     type: mapIntervalType(raw.type),
-    isRecovery: raw.type === 'Recovery' || raw.type === 'recovery',
+    isRecovery: typeof raw.type === 'string' && raw.type.toLowerCase() === 'recovery',
   };
 }
 
@@ -215,15 +215,15 @@ function mapRawIntervalToDomain(raw: any): DomainInterval {
  */
 function mapIntervalType(type: string): DomainInterval['type'] {
   const typeLower = type.toLowerCase();
-  
+
   if (typeLower === 'warmup' || typeLower === 'warm up') return 'warmup';
   if (typeLower === 'cooldown' || typeLower === 'cool down') return 'cooldown';
   if (typeLower === 'recovery') return 'recovery';
-  if (typeLower === 'interval') return 'interval';
+  if (typeLower === 'work' || typeLower === 'interval') return 'interval';
   if (typeLower === 'race') return 'race';
   if (typeLower === 'hill') return 'hill';
   if (typeLower === 'sprint') return 'sprint';
-  
+
   return 'steady';
 }
 
